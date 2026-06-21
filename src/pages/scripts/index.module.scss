@@ -293,12 +293,26 @@
 
 .mistakeItemHeader {
   margin-bottom: $spacing-xs;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
 }
 
 .mistakeRecording {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: $color-text-primary;
+}
+
+.mistakeModeTag {
+  padding: 2rpx 12rpx;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: $radius-round;
+}
+
+.mistakeModeTagText {
+  font-size: 20rpx;
+  color: $color-primary;
 }
 
 .mistakeItemText {

@@ -3,7 +3,7 @@ import { View, Text, Image, Textarea, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
-import { challengeLevels, recordings } from '@/data/recordings';
+import { recordings } from '@/data/recordings';
 import styles from './index.module.scss';
 
 const STORAGE_KEY_TARGET_RECORDING = 'target_recording_id';
@@ -13,6 +13,7 @@ const ReviewPage: React.FC = () => {
   const [reviewText, setReviewText] = useState('');
   const [taskNote, setTaskNote] = useState('');
   const [selectedRecordingIndex, setSelectedRecordingIndex] = useState(0);
+  const [selectedMode, setSelectedMode] = useState<'challenge' | 'deduction'>('challenge');
   const [taskTab, setTaskTab] = useState<'pending' | 'done'>('pending');
 
   const getAccuracyColor = (accuracy: number) => {
@@ -51,25 +52,25 @@ const ReviewPage: React.FC = () => {
       mentorAvatar: 'https://picsum.photos/id/1027/200/200',
       recordingId: rec.id,
       recordingTitle: rec.title,
-      note: taskNote.trim()
+      note: taskNote.trim(),
+      mode: selectedMode
     });
     Taro.showToast({ title: '任务已布置', icon: 'success' });
     setTaskNote('');
   };
 
-  const handleListenRecording = (recordingId: string) => {
+  const handleListenRecording = (recordingId: string, mode?: 'challenge' | 'deduction') => {
     if (!recordingId) return;
-    const level = challengeLevels.find((l) => l.recordingId === recordingId);
-    if (!level) {
-      Taro.showToast({ title: '录音未关联关卡', icon: 'none' });
-      return;
-    }
     try {
       Taro.setStorageSync(STORAGE_KEY_TARGET_RECORDING, recordingId);
     } catch (e) {
       console.error('[Review] Save target failed', e);
     }
-    Taro.switchTab({ url: '/pages/challenge/index' });
+    if (mode === 'deduction') {
+      Taro.switchTab({ url: '/pages/deduction/index' });
+    } else {
+      Taro.switchTab({ url: '/pages/challenge/index' });
+    }
   };
 
   const pendingTasks = practiceTasks.filter((t) => !t.completed);
@@ -112,6 +113,11 @@ const ReviewPage: React.FC = () => {
                   <Text className={styles.taskMentor}>{task.mentorName}</Text>
                   <Text className={styles.taskDate}>{task.date}布置</Text>
                 </View>
+                <View className={styles.taskModeTag}>
+                  <Text className={styles.taskModeTagText}>
+                    {task.mode === 'deduction' ? '找茬' : '闯关'}
+                  </Text>
+                </View>
                 {task.completed && task.lastScore !== undefined && (
                   <View className={styles.taskScoreBadge}>
                     <Text className={styles.taskScoreText}>{task.lastScore}分</Text>
@@ -123,9 +129,9 @@ const ReviewPage: React.FC = () => {
               <View className={styles.taskActions}>
                 {!task.completed ? (
                   <View
-                    className={styles.taskGoBtn}
-                    onClick={() => handleListenRecording(task.recordingId)}
-                  >
+                      className={styles.taskGoBtn}
+                      onClick={() => handleListenRecording(task.recordingId, task.mode)}
+                    >
                     <Text style={{ color: '#fff', fontSize: '24rpx' }}>开始练习 →</Text>
                   </View>
                 ) : (
@@ -135,7 +141,7 @@ const ReviewPage: React.FC = () => {
                     </Text>
                     <View
                       className={styles.taskRetryBtn}
-                      onClick={() => handleListenRecording(task.recordingId)}
+                      onClick={() => handleListenRecording(task.recordingId, task.mode)}
                     >
                       <Text style={{ color: '#6366F1', fontSize: '24rpx' }}>再练一次</Text>
                     </View>
@@ -157,6 +163,23 @@ const ReviewPage: React.FC = () => {
       <View className={styles.assignSection}>
         <View className={styles.assignCard}>
           <Text className={styles.assignTitle}>📋 布置重练任务（带教老师）</Text>
+          <View className={styles.assignField}>
+            <Text className={styles.assignLabel}>练习模式</Text>
+            <View className={styles.modeSelector}>
+              <View
+                className={`${styles.modeBtn} ${selectedMode === 'challenge' ? styles.modeBtnActive : ''}`}
+                onClick={() => setSelectedMode('challenge')}
+              >
+                <Text style={{ fontSize: '26rpx', color: selectedMode === 'challenge' ? '#fff' : '#6366F1' }}>录音闯关</Text>
+              </View>
+              <View
+                className={`${styles.modeBtn} ${selectedMode === 'deduction' ? styles.modeBtnActive : ''}`}
+                onClick={() => setSelectedMode('deduction')}
+              >
+                <Text style={{ fontSize: '26rpx', color: selectedMode === 'deduction' ? '#fff' : '#6366F1' }}>扣分找茬</Text>
+              </View>
+            </View>
+          </View>
           <View className={styles.assignField}>
             <Text className={styles.assignLabel}>选择录音</Text>
             <Picker

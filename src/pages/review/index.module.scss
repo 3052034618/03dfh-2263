@@ -290,6 +290,41 @@
   }
 }
 
+.modeSelector {
+  display: flex;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 6rpx;
+}
+
+.modeBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm 0;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+}
+
+.modeBtnActive {
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+}
+
+.taskModeTag {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  background: rgba(99, 102, 241, 0.1);
+  margin-left: $spacing-xs;
+}
+
+.taskModeTagText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
 .reviewCard {
   background: $color-bg-card;
   border-radius: $radius-lg;

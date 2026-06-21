@@ -45,6 +45,7 @@ const mockPracticeTasks: PracticeTask[] = [
     recordingId: 'rec-004',
     recordingTitle: '吸脂咨询 - 风险告知检查',
     note: '重点关注风险告知话术，3处违规都要找出来，下周抽查',
+    mode: 'deduction',
     date: '2026-06-20',
     completed: false
   },
@@ -55,6 +56,7 @@ const mockPracticeTasks: PracticeTask[] = [
     recordingId: 'rec-002',
     recordingTitle: '隆鼻咨询 - 效果承诺识别',
     note: '复习效果承诺类违规识别，特别是"保证"类话术',
+    mode: 'challenge',
     date: '2026-06-18',
     completed: true,
     lastScore: 85,
@@ -65,9 +67,10 @@ const mockPracticeTasks: PracticeTask[] = [
 const computeWeaknessItems = (mistakes: MistakeRecord[], baseWeakness: WeaknessItem[]): WeaknessItem[] => {
   const categories = ['price_objection', 'efficacy_promise', 'postoperative_care', 'risk_concealment'] as const;
   const baseMap = new Map(baseWeakness.map((w) => [w.category, w]));
+  const activeMistakes = mistakes.filter((m) => !m.mastered);
 
   return categories.map((cat) => {
-    const catMistakes = mistakes.filter((m) => m.category === cat);
+    const catMistakes = activeMistakes.filter((m) => m.category === cat);
     const base = baseMap.get(cat);
     const baseWrong = base?.wrongCount || 0;
     const baseTotal = base?.totalCount || 0;
@@ -106,7 +109,8 @@ interface TrainingState {
   completeDailyTask: (taskId: string, score: number) => void;
   completeChallengeLevel: (levelId: string, score: number, stars: number) => void;
   answerDeductionItem: (itemId: string, correct: boolean) => void;
-  addMistake: (mistake: Omit<MistakeRecord, 'id' | 'timestamp'>) => void;
+  addMistake: (mistake: Omit<MistakeRecord, 'id' | 'timestamp' | 'mastered'>) => void;
+  markMistakeMastered: (mistakeId: string) => void;
   addMentorReview: (review: Omit<MentorReview, 'id' | 'date'>) => void;
   addPracticeTask: (task: Omit<PracticeTask, 'id' | 'date' | 'completed'>) => void;
   completePracticeTask: (taskId: string, score: number) => void;
@@ -157,14 +161,24 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
     const newMistake: MistakeRecord = {
       ...mistake,
       id: `mistake-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      mastered: false
     };
     set((state) => {
       const updatedMistakes = [...state.mistakes, newMistake];
       const updatedWeakness = computeWeaknessItems(updatedMistakes, mockWeakness);
       return { mistakes: updatedMistakes, weaknessItems: updatedWeakness };
     });
-    console.info('[Store] Mistake added', newMistake);
+  },
+
+  markMistakeMastered: (mistakeId) => {
+    set((state) => {
+      const updatedMistakes = state.mistakes.map((m) =>
+        m.id === mistakeId ? { ...m, mastered: true } : m
+      );
+      const updatedWeakness = computeWeaknessItems(updatedMistakes, mockWeakness);
+      return { mistakes: updatedMistakes, weaknessItems: updatedWeakness };
+    });
   },
 
   addMentorReview: (review) => {
@@ -176,7 +190,6 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
     set((state) => ({
       mentorReviews: [newReview, ...state.mentorReviews]
     }));
-    console.info('[Store] Review added', newReview);
   },
 
   addPracticeTask: (task) => {
@@ -189,7 +202,6 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
     set((state) => ({
       practiceTasks: [newTask, ...state.practiceTasks]
     }));
-    console.info('[Store] Practice task added', newTask);
   },
 
   completePracticeTask: (taskId, score) => {
@@ -219,7 +231,17 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
       get().completePracticeTask(pendingTask.id, score);
     }
 
-    console.info('[Store] Practice recorded', { recordingId, score });
+    set((s) => ({
+      mistakes: s.mistakes.map((m) =>
+        m.recordingId === recordingId
+          ? {
+              ...m,
+              lastPracticeScore: score,
+              lastPracticeDate: new Date().toISOString().split('T')[0]
+            }
+          : m
+      )
+    }));
   },
 
   setQualificationScore: (score) => {

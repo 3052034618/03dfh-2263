@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, ScrollView } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { recordings, challengeLevels } from '@/data/recordings';
+import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
 import styles from './index.module.scss';
 
 const STORAGE_KEY_TARGET_RECORDING = 'target_recording_id';
@@ -337,7 +338,7 @@ const ChallengePage: React.FC = () => {
                 )}
               </>
             ) : (
-              <>
+              <ScrollView scrollY style={{maxHeight: '70vh'}}>
                 <Text className={styles.reviewTitle}>📊 本次练习复盘</Text>
                 <View className={styles.reviewSubtitle}>
                   <Text style={{ fontSize: '24rpx', color: '#6B7280' }}>{activeRecording.title}</Text>
@@ -480,7 +481,7 @@ const ChallengePage: React.FC = () => {
                     <Text style={{ color: '#fff', fontSize: '28rpx' }}>再练一次</Text>
                   </View>
                 </View>
-              </>
+              </ScrollView>
             )}
           </View>
         </View>

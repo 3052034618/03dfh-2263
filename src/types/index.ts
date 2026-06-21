@@ -112,6 +112,7 @@ export interface PracticeTask {
   recordingId: string;
   recordingTitle: string;
   note: string;
+  mode: 'challenge' | 'deduction';
   date: string;
   completed: boolean;
   lastScore?: number;
@@ -135,6 +136,9 @@ export interface MistakeRecord {
   violationText: string;
   recordingId: string;
   timestamp: number;
+  mastered: boolean;
+  lastPracticeScore?: number;
+  lastPracticeDate?: string;
 }
 
 export interface WeaknessItem {
@@ -173,4 +177,11 @@ export const VIOLATION_CATEGORY_COLOR: Record<string, string> = {
   efficacy_promise: '#FEE2E2',
   postoperative_care: '#D1FAE5',
   risk_concealment: '#DBEAFE'
+};
+
+export const VIOLATION_CATEGORY_TEXT_COLOR: Record<string, string> = {
+  price_objection: '#92400E',
+  efficacy_promise: '#991B1B',
+  postoperative_care: '#065F46',
+  risk_concealment: '#1E40AF'
 };

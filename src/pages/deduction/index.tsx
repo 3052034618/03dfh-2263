@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -79,6 +79,21 @@ const DeductionPage: React.FC = () => {
     });
   };
 
+  useDidShow(() => {
+    try {
+      const targetId = Taro.getStorageSync('target_recording_id');
+      if (targetId) {
+        Taro.removeStorageSync('target_recording_id');
+        const idx = filteredRecordings.findIndex((r) => r.id === targetId);
+        if (idx >= 0) {
+          handleRecordingChange(idx);
+        }
+      }
+    } catch (e) {
+      console.error('[Deduction] Read target failed', e);
+    }
+  });
+
   const handleSubmit = () => {
     if (selectedPositions.length === 0 && riskAnswer === null) return;
     if (!canAnswer) {
@@ -89,6 +104,15 @@ const DeductionPage: React.FC = () => {
     audio.pause();
 
     if (currentRecording) {
+      const hitResultsInline = currentRecording.violations.map((v) => {
+        const hit = selectedPositions.some((p) => Math.abs(p - v.position) <= 2);
+        return { violation: v, hit, points: hit ? v.deductionPoints : 0 };
+      });
+      const riskCorrect = riskAnswer === currentRecording.riskDisclosureComplete;
+      const maxPts = currentRecording.violations.reduce((s, v) => s + v.deductionPoints, 0) + 30;
+      const earnedPts = hitResultsInline.reduce((s, r) => s + r.points, 0) + (riskCorrect ? 30 : 0);
+      const inlineScore = Math.round((earnedPts / maxPts) * 100);
+
       currentRecording.violations.forEach((v) => {
         const wasHit = selectedPositions.some((p) => Math.abs(p - v.position) <= 2);
         if (!wasHit) {
@@ -112,7 +136,7 @@ const DeductionPage: React.FC = () => {
           recordingId: currentRecording.id
         });
       }
-      useTrainingStore.getState().recordPractice(currentRecording.id, totalScore);
+      useTrainingStore.getState().recordPractice(currentRecording.id, inlineScore);
     }
 
     console.info('[Deduction] Submit', { selectedPositions, riskAnswer, recordingId: currentRecording?.id });

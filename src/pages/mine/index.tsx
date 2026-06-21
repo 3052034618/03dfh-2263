@@ -95,11 +95,14 @@ const MinePage: React.FC = () => {
             <Text className={styles.featureDesc}>查看薄弱清单</Text>
           </View>
         </View>
-        <View className={styles.featureCard}>
-          <Text className={styles.featureIcon}>🔓</Text>
+        <View
+          className={styles.featureCard}
+          onClick={() => Taro.navigateTo({ url: '/pages/mistakes/index' })}
+        >
+          <Text className={styles.featureIcon}>�</Text>
           <View className={styles.featureInfo}>
-            <Text className={styles.featureName}>优秀录音</Text>
-            <Text className={styles.featureDesc}>解锁成交录音</Text>
+            <Text className={styles.featureName}>错题本</Text>
+            <Text className={styles.featureDesc}>查看个人错题</Text>
           </View>
         </View>
       </View>

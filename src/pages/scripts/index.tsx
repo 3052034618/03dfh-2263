@@ -4,18 +4,35 @@ import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { scriptCategories, scriptItems } from '@/data/scripts';
-import { challengeLevels } from '@/data/recordings';
+import { challengeLevels, recordings } from '@/data/recordings';
 import { VIOLATION_CATEGORY_COLOR } from '@/types';
-import type { ViolationCategory } from '@/types';
+import type { ViolationCategory, MistakeRecord } from '@/types';
 import styles from './index.module.scss';
 
 const STORAGE_KEY_TARGET_RECORDING = 'target_recording_id';
+const STORAGE_KEY_TARGET_SEEK = 'target_seek_position';
 
 const CATEGORY_TO_SCRIPT_MAP: Record<ViolationCategory, string> = {
   price_objection: 'sc-001',
   efficacy_promise: 'sc-002',
   postoperative_care: 'sc-003',
   risk_concealment: 'sc-004'
+};
+
+const getRecordingMode = (recordingId: string): 'challenge' | 'deduction' | null => {
+  if (challengeLevels.some((l) => l.recordingId === recordingId)) return 'challenge';
+  const rec = recordings.find((r) => r.id === recordingId);
+  if (rec && rec.unlocked) return 'deduction';
+  return null;
+};
+
+const getViolationPositionForMistake = (mistake: MistakeRecord): number | null => {
+  const rec = recordings.find((r) => r.id === mistake.recordingId);
+  if (!rec) return null;
+  const violation = rec.violations.find(
+    (v) => v.text === mistake.violationText || v.category === mistake.category
+  );
+  return violation ? violation.position : null;
 };
 
 const ScriptsPage: React.FC = () => {
@@ -39,22 +56,36 @@ const ScriptsPage: React.FC = () => {
   };
 
   const getMistakesByCategory = (category: string) => {
-    return mistakes.filter((m) => m.category === category).slice(0, 10);
+    return mistakes.filter((m) => m.category === category && !m.mastered).slice(0, 10);
   };
 
-  const handleListenRecording = (recordingId: string) => {
+  const handleListenRecording = (recordingId: string, mistake?: MistakeRecord) => {
     if (!recordingId) return;
-    const level = challengeLevels.find((l) => l.recordingId === recordingId);
-    if (!level) {
-      Taro.showToast({ title: '录音未关联关卡', icon: 'none' });
+    const mode = getRecordingMode(recordingId);
+    if (!mode) {
+      Taro.showToast({ title: '该录音暂未开放', icon: 'none' });
       return;
     }
     try {
       Taro.setStorageSync(STORAGE_KEY_TARGET_RECORDING, recordingId);
+      if (mistake) {
+        const position = getViolationPositionForMistake(mistake);
+        if (position !== null) {
+          const rec = recordings.find((r) => r.id === recordingId);
+          const seekSeconds = rec
+            ? Math.round((position / 60) * rec.duration)
+            : 0;
+          Taro.setStorageSync(STORAGE_KEY_TARGET_SEEK, String(seekSeconds));
+        }
+      }
     } catch (e) {
       console.error('[Scripts] Save target failed', e);
     }
-    Taro.switchTab({ url: '/pages/challenge/index' });
+    if (mode === 'deduction') {
+      Taro.switchTab({ url: '/pages/deduction/index' });
+    } else {
+      Taro.switchTab({ url: '/pages/challenge/index' });
+    }
   };
 
   const handleViewScript = (category: string) => {
@@ -68,8 +99,13 @@ const ScriptsPage: React.FC = () => {
   };
 
   const getRecordingTitle = (recordingId: string) => {
-    const level = challengeLevels.find((l) => l.recordingId === recordingId);
-    return level?.title || '未知录音';
+    const rec = recordings.find((r) => r.id === recordingId);
+    return rec?.title || '未知录音';
+  };
+
+  const getRecordingModeLabel = (recordingId: string) => {
+    const mode = getRecordingMode(recordingId);
+    return mode === 'deduction' ? '找茬' : mode === 'challenge' ? '闯关' : '';
   };
 
   return (
@@ -150,32 +186,40 @@ const ScriptsPage: React.FC = () => {
                           <Text className={styles.mistakeListTitle}>
                             📝 错题来源（{catMistakes.length}条）
                           </Text>
-                          {catMistakes.map((m) => (
-                            <View key={m.id} className={styles.mistakeItem}>
-                              <View className={styles.mistakeItemHeader}>
-                                <Text className={styles.mistakeRecording}>
-                                  🎙 {getRecordingTitle(m.recordingId || '')}
+                          {catMistakes.map((m) => {
+                            const modeLabel = getRecordingModeLabel(m.recordingId || '');
+                            return (
+                              <View key={m.id} className={styles.mistakeItem}>
+                                <View className={styles.mistakeItemHeader}>
+                                  <Text className={styles.mistakeRecording}>
+                                    🎙 {getRecordingTitle(m.recordingId || '')}
+                                  </Text>
+                                  {modeLabel && (
+                                    <View className={styles.mistakeModeTag}>
+                                      <Text className={styles.mistakeModeTagText}>{modeLabel}</Text>
+                                    </View>
+                                  )}
+                                </View>
+                                <Text className={styles.mistakeItemText}>
+                                  ❌ {m.violationText}
                                 </Text>
-                              </View>
-                              <Text className={styles.mistakeItemText}>
-                                ❌ {m.violationText}
-                              </Text>
-                              <View className={styles.mistakeItemActions}>
-                                <View
-                                  className={styles.actionBtn}
-                                  onClick={() => handleListenRecording(m.recordingId || '')}
-                                >
-                                  <Text className={styles.actionBtnText}>去听录音</Text>
-                                </View>
-                                <View
-                                  className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
-                                  onClick={() => handleViewScript(m.category)}
-                                >
-                                  <Text className={styles.actionBtnPrimaryText}>查看话术</Text>
+                                <View className={styles.mistakeItemActions}>
+                                  <View
+                                    className={styles.actionBtn}
+                                    onClick={() => handleListenRecording(m.recordingId || '', m)}
+                                  >
+                                    <Text className={styles.actionBtnText}>去听录音</Text>
+                                  </View>
+                                  <View
+                                    className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                                    onClick={() => handleViewScript(m.category)}
+                                  >
+                                    <Text className={styles.actionBtnPrimaryText}>查看话术</Text>
+                                  </View>
                                 </View>
                               </View>
-                            </View>
-                          ))}
+                            );
+                          })}
                         </View>
                       ) : (
                         <Text className={styles.noMistakeText}>暂无错题记录，继续保持！</Text>
