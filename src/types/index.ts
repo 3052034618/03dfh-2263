@@ -105,6 +105,27 @@ export interface MentorReview {
   recordingId: string;
 }
 
+export interface PracticeTask {
+  id: string;
+  mentorName: string;
+  mentorAvatar: string;
+  recordingId: string;
+  recordingTitle: string;
+  note: string;
+  date: string;
+  completed: boolean;
+  lastScore?: number;
+  completedDate?: string;
+}
+
+export interface RecordingPracticeRecord {
+  recordingId: string;
+  practiceCount: number;
+  bestScore: number;
+  lastScore: number;
+  lastPracticeDate: string;
+}
+
 export interface MistakeRecord {
   id: string;
   category: 'price_objection' | 'efficacy_promise' | 'postoperative_care' | 'risk_concealment';
@@ -112,6 +133,7 @@ export interface MistakeRecord {
   userAnswer: string;
   correctAnswer: string;
   violationText: string;
+  recordingId: string;
   timestamp: number;
 }
 

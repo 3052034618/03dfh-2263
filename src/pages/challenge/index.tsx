@@ -108,9 +108,10 @@ const ChallengePage: React.FC = () => {
       useTrainingStore.getState().addMistake({
         category: 'efficacy_promise',
         question: activeRecording.title,
-        userAnswer: activeRecording.demandOptions[selectedDemand],
+        userAnswer: activeRecording.demandOptions[selectedDemand!],
         correctAnswer: activeRecording.demandOptions[activeRecording.correctDemandIndex],
-        violationText: `顾客核心诉求判断错误：${activeRecording.demandOptions[selectedDemand]}`
+        violationText: `顾客核心诉求判断错误：${activeRecording.demandOptions[selectedDemand!]}`,
+        recordingId: activeRecording.id
       });
     }
     if (!exaggerationCorrect && activeRecording) {
@@ -119,13 +120,18 @@ const ChallengePage: React.FC = () => {
         question: activeRecording.title,
         userAnswer: exaggerationAnswer ? '存在夸大' : '不存在夸大',
         correctAnswer: activeRecording.hasExaggeration ? '存在夸大' : '不存在夸大',
-        violationText: '咨询师夸大疗效判断错误'
+        violationText: '咨询师夸大疗效判断错误',
+        recordingId: activeRecording.id
       });
     }
 
     if (activeLevel) {
       const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 60 ? 1 : 0;
       useTrainingStore.getState().completeChallengeLevel(activeLevel, score, stars);
+    }
+
+    if (activeRecording) {
+      useTrainingStore.getState().recordPractice(activeRecording.id, score);
     }
 
     console.info('[Challenge] Submit answer', { demandCorrect, exaggerationCorrect, score });
@@ -141,10 +147,15 @@ const ChallengePage: React.FC = () => {
     setSubmitted(false);
   };
 
+  const demandCorrect = submitted && activeRecording
+    ? selectedDemand === activeRecording.correctDemandIndex
+    : false;
+  const exaggerationCorrect = submitted && activeRecording
+    ? exaggerationAnswer === activeRecording.hasExaggeration
+    : false;
+
   const currentScore = (() => {
     if (!activeRecording || !submitted) return 0;
-    const demandCorrect = selectedDemand === activeRecording.correctDemandIndex;
-    const exaggerationCorrect = exaggerationAnswer === activeRecording.hasExaggeration;
     let score = 0;
     if (demandCorrect) score += 50;
     if (exaggerationCorrect) score += 50;
@@ -248,80 +259,90 @@ const ChallengePage: React.FC = () => {
 
                 <View
                   className={classnames(
-                    styles.questionCard,
-                    !canAnswer && styles.questionCardDisabled
+                    styles.answerSection,
+                    canAnswer && styles.answerSectionExpanded
                   )}
                 >
-                  <Text className={styles.questionLabel}>1. 顾客的核心诉求是什么？</Text>
-                  <View className={styles.optionsGrid}>
-                    {activeRecording.demandOptions.map((option, idx) => (
+                  <View className={styles.questionCard}>
+                    <Text className={styles.questionLabel}>1. 顾客的核心诉求是什么？</Text>
+                    <View className={styles.optionsGrid}>
+                      {activeRecording.demandOptions.map((option, idx) => (
+                        <View
+                          key={idx}
+                          className={classnames(
+                            styles.optionBtn,
+                            selectedDemand === idx && styles.optionBtnSelected,
+                            submitted && idx === activeRecording.correctDemandIndex && styles.optionBtnCorrect,
+                            submitted && selectedDemand === idx && idx !== activeRecording.correctDemandIndex && styles.optionBtnWrong
+                          )}
+                          onClick={() => canAnswer && !submitted && setSelectedDemand(idx)}
+                        >
+                          <Text style={{ fontSize: '24rpx' }}>{option}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  <View className={styles.questionCard}>
+                    <Text className={styles.questionLabel}>2. 咨询师是否存在夸大疗效？</Text>
+                    <View className={styles.judgeRow}>
                       <View
-                        key={idx}
                         className={classnames(
-                          styles.optionBtn,
-                          selectedDemand === idx && styles.optionBtnSelected,
-                          submitted && idx === activeRecording.correctDemandIndex && styles.optionBtnCorrect,
-                          submitted && selectedDemand === idx && idx !== activeRecording.correctDemandIndex && styles.optionBtnWrong
+                          styles.judgeBtn,
+                          styles.judgeBtnYes,
+                          exaggerationAnswer === true && styles.optionBtnSelected,
+                          !canAnswer && styles.judgeBtnDisabled
                         )}
-                        onClick={() => canAnswer && !submitted && setSelectedDemand(idx)}
+                        onClick={() => canAnswer && !submitted && setExaggerationAnswer(true)}
                       >
-                        <Text style={{ fontSize: '24rpx' }}>{option}</Text>
+                        <Text style={{ color: '#fff', fontSize: '28rpx' }}>存在夸大</Text>
                       </View>
-                    ))}
+                      <View
+                        className={classnames(
+                          styles.judgeBtn,
+                          styles.judgeBtnNo,
+                          exaggerationAnswer === false && styles.optionBtnSelected,
+                          !canAnswer && styles.judgeBtnDisabled
+                        )}
+                        onClick={() => canAnswer && !submitted && setExaggerationAnswer(false)}
+                      >
+                        <Text style={{ fontSize: '28rpx' }}>不存在</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
 
-                <View
-                  className={classnames(
-                    styles.questionCard,
-                    !canAnswer && styles.questionCardDisabled
-                  )}
-                >
-                  <Text className={styles.questionLabel}>2. 咨询师是否存在夸大疗效？</Text>
-                  <View className={styles.judgeRow}>
-                    <View
-                      className={classnames(
-                        styles.judgeBtn,
-                        styles.judgeBtnYes,
-                        exaggerationAnswer === true && styles.optionBtnSelected,
-                        !canAnswer && styles.judgeBtnDisabled
-                      )}
-                      onClick={() => canAnswer && !submitted && setExaggerationAnswer(true)}
-                    >
-                      <Text style={{ color: '#fff', fontSize: '28rpx' }}>存在夸大</Text>
+                  <View className={styles.modalActions}>
+                    <View className={classnames(styles.modalBtn, styles.modalBtnSecondary)} onClick={handleCloseModal}>
+                      <Text style={{ fontSize: '28rpx' }}>取消</Text>
                     </View>
                     <View
                       className={classnames(
-                        styles.judgeBtn,
-                        styles.judgeBtnNo,
-                        exaggerationAnswer === false && styles.optionBtnSelected,
-                        !canAnswer && styles.judgeBtnDisabled
+                        styles.modalBtn,
+                        styles.modalBtnPrimary,
+                        (selectedDemand === null || exaggerationAnswer === null) && { opacity: 0.5 }
                       )}
-                      onClick={() => canAnswer && !submitted && setExaggerationAnswer(false)}
+                      onClick={handleSubmit}
                     >
-                      <Text style={{ fontSize: '28rpx' }}>不存在</Text>
+                      <Text style={{ color: '#fff', fontSize: '28rpx' }}>提交答案</Text>
                     </View>
                   </View>
                 </View>
 
-                <View className={styles.modalActions}>
-                  <View className={classnames(styles.modalBtn, styles.modalBtnSecondary)} onClick={handleCloseModal}>
-                    <Text style={{ fontSize: '28rpx' }}>取消</Text>
+                {!canAnswer && (
+                  <View className={styles.listenTipBar}>
+                    <Text className={styles.listenTipText}>
+                      🎧 请先完整听完录音再作答
+                    </Text>
                   </View>
-                  <View
-                    className={classnames(
-                      styles.modalBtn,
-                      styles.modalBtnPrimary,
-                      (!canAnswer || selectedDemand === null || exaggerationAnswer === null) && { opacity: 0.5 }
-                    )}
-                    onClick={handleSubmit}
-                  >
-                    <Text style={{ color: '#fff', fontSize: '28rpx' }}>提交答案</Text>
-                  </View>
-                </View>
+                )}
               </>
             ) : (
               <>
+                <Text className={styles.reviewTitle}>📊 本次练习复盘</Text>
+                <View className={styles.reviewSubtitle}>
+                  <Text style={{ fontSize: '24rpx', color: '#6B7280' }}>{activeRecording.title}</Text>
+                </View>
+
                 <View className={styles.resultCard}>
                   <Text
                     className={classnames(
@@ -342,9 +363,121 @@ const ChallengePage: React.FC = () => {
                     ))}
                   </View>
                 </View>
-                <View className={styles.modalActions}>
-                  <View className={classnames(styles.modalBtn, styles.modalBtnPrimary)} onClick={handleCloseModal}>
-                    <Text style={{ color: '#fff', fontSize: '28rpx' }}>完成</Text>
+
+                <View className={styles.reviewSection}>
+                  <Text className={styles.reviewSectionTitle}>❌ 错题汇总</Text>
+                  {demandCorrect && exaggerationCorrect ? (
+                    <Text className={styles.reviewEmpty}>太棒了！全部答对🎉</Text>
+                  ) : (
+                    <>
+                      {!demandCorrect && (
+                        <View className={styles.reviewItem}>
+                          <View className={styles.reviewItemHeader}>
+                            <Text className={styles.reviewItemIcon}>❌</Text>
+                            <Text className={styles.reviewItemTitle}>顾客核心诉求判断错误</Text>
+                          </View>
+                          <View className={styles.reviewItemBody}>
+                            <Text className={styles.reviewItemLabel}>你的答案</Text>
+                            <Text className={styles.reviewItemWrong}>
+                              {activeRecording.demandOptions[selectedDemand!]}
+                            </Text>
+                            <Text className={styles.reviewItemLabel}>正确答案</Text>
+                            <Text className={styles.reviewItemCorrect}>
+                              {activeRecording.demandOptions[activeRecording.correctDemandIndex]}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                      {!exaggerationCorrect && (
+                        <View className={styles.reviewItem}>
+                          <View className={styles.reviewItemHeader}>
+                            <Text className={styles.reviewItemIcon}>❌</Text>
+                            <Text className={styles.reviewItemTitle}>夸大疗效判断错误</Text>
+                          </View>
+                          <View className={styles.reviewItemBody}>
+                            <Text className={styles.reviewItemLabel}>你的答案</Text>
+                            <Text className={styles.reviewItemWrong}>
+                              {exaggerationAnswer ? '存在夸大' : '不存在夸大'}
+                            </Text>
+                            <Text className={styles.reviewItemLabel}>正确答案</Text>
+                            <Text className={styles.reviewItemCorrect}>
+                              {activeRecording.hasExaggeration ? '存在夸大' : '不存在夸大'}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                    </>
+                  )}
+                </View>
+
+                <View className={styles.reviewSection}>
+                  <Text className={styles.reviewSectionTitle}>🎯 录音违规点梳理</Text>
+                  {activeRecording.violations.length === 0 ? (
+                    <Text className={styles.reviewEmpty}>这段录音无违规话术</Text>
+                  ) : (
+                    activeRecording.violations.map((v, idx) => (
+                      <View key={v.id} className={styles.violationReviewItem}>
+                        <View className={styles.violationReviewHeader}>
+                          <Text className={styles.violationReviewIndex}>违规 #{idx + 1}</Text>
+                          <View
+                            className={styles.violationReviewTag}
+                            style={{ background: VIOLATION_CATEGORY_COLOR[v.category] }}
+                          >
+                            <Text style={{ fontSize: '20rpx' }}>
+                              {VIOLATION_CATEGORY_MAP[v.category]}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text className={styles.violationReviewText}>{v.text}</Text>
+                        <View className={styles.violationReviewTime}>
+                          <Text style={{ fontSize: '22rpx', color: '#6B7280' }}>
+                            🕒 出现时间：约 {Math.round((v.position / 60) * activeRecording.duration / 60)}分{Math.round((v.position / 60) * activeRecording.duration % 60).toString().padStart(2, '0')}秒
+                          </Text>
+                        </View>
+                        <View className={styles.standardAnswer}>
+                          <Text className={styles.standardLabel}>标准话术</Text>
+                          <Text className={styles.standardText}>{v.standardAnswer}</Text>
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                <View className={styles.reviewSection}>
+                  <Text className={styles.reviewSectionTitle}>💡 建议复听时间点</Text>
+                  <View className={styles.reviewTimestamps}>
+                    {activeRecording.violations.slice(0, 3).map((v, idx) => (
+                      <View key={v.id} className={styles.timestampChip}>
+                        <Text className={styles.timestampChipText}>
+                          {Math.floor((v.position / 60) * activeRecording.duration / 60)}:{Math.floor(((v.position / 60) * activeRecording.duration) % 60).toString().padStart(2, '0')}
+                        </Text>
+                        <Text className={styles.timestampChipLabel}>
+                          {VIOLATION_CATEGORY_MAP[v.category]}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                <View className={styles.reviewActions}>
+                  <View
+                    className={classnames(styles.reviewBtn, styles.reviewBtnSecondary)}
+                    onClick={handleCloseModal}
+                  >
+                    <Text style={{ fontSize: '28rpx' }}>完成</Text>
+                  </View>
+                  <View
+                    className={classnames(styles.reviewBtn, styles.reviewBtnPrimary)}
+                    onClick={() => {
+                      audio.stop();
+                      audio.markReset();
+                      setShowResult(false);
+                      setSubmitted(false);
+                      setSelectedDemand(null);
+                      setExaggerationAnswer(null);
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: '28rpx' }}>再练一次</Text>
                   </View>
                 </View>
               </>

@@ -417,3 +417,175 @@
   color: $color-text-primary;
   display: block;
 }
+
+.answerSection {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-20rpx);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &Expanded {
+    max-height: 1000rpx;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.listenTipBar {
+  margin: $spacing-lg;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.04));
+  border: 2rpx dashed rgba(239, 68, 68, 0.3);
+  border-radius: $radius-md;
+  text-align: center;
+}
+
+.listenTipText {
+  font-size: $font-size-sm;
+  color: #EF4444;
+  font-weight: $font-weight-medium;
+}
+
+.reviewHeader {
+  text-align: center;
+  margin-bottom: $spacing-md;
+}
+
+.reviewTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.reviewSubtitle {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.reviewSection {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.reviewSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.categoryStatItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.categoryStatTag {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+  min-width: 100rpx;
+  text-align: center;
+}
+
+.categoryStatText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  width: 100rpx;
+  flex-shrink: 0;
+}
+
+.categoryStatBarBg {
+  flex: 1;
+  height: 12rpx;
+  background: $color-divider;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.categoryStatBarFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-slow;
+}
+
+.reviewTimestamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.timestampChip {
+  background: linear-gradient(135deg, #EF4444, #F87171);
+  border-radius: $radius-round;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  min-width: 120rpx;
+}
+
+.timestampChipText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+  display: block;
+  line-height: 1.2;
+}
+
+.timestampChipLabel {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.85);
+  display: block;
+  margin-top: 2rpx;
+}
+
+.reviewEmpty {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+  padding: $spacing-md 0;
+  display: block;
+}
+
+.reviewActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+}
+
+.reviewBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.reviewBtnPrimary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  color: $color-text-white;
+}
+
+.reviewBtnSecondary {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+}

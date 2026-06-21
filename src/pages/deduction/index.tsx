@@ -97,7 +97,8 @@ const DeductionPage: React.FC = () => {
             question: currentRecording.title,
             userAnswer: '未标中该违规点',
             correctAnswer: v.text,
-            violationText: v.text
+            violationText: v.text,
+            recordingId: currentRecording.id
           });
         }
       });
@@ -107,9 +108,11 @@ const DeductionPage: React.FC = () => {
           question: currentRecording.title,
           userAnswer: riskAnswer ? '风险告知完整' : '风险告知不完整',
           correctAnswer: currentRecording.riskDisclosureComplete ? '风险告知完整' : '风险告知不完整',
-          violationText: '风险告知完整性判断错误'
+          violationText: '风险告知完整性判断错误',
+          recordingId: currentRecording.id
         });
       }
+      useTrainingStore.getState().recordPractice(currentRecording.id, totalScore);
     }
 
     console.info('[Deduction] Submit', { selectedPositions, riskAnswer, recordingId: currentRecording?.id });
@@ -196,7 +199,7 @@ const DeductionPage: React.FC = () => {
 
             <View className={styles.waveformSection}>
               <Text className={styles.waveformLabel}>
-                点击波形标记违规位置（可标记多个）
+                {canAnswer ? '点击波形标记违规位置（可标记多个）' : '🎧 听录音，注意违规话术出现的位置'}
               </Text>
               {!canAnswer && !submitted && (
                 <Text className={styles.listenHint}>
@@ -219,25 +222,26 @@ const DeductionPage: React.FC = () => {
                     ? currentRecording.violations.map((v) => v.position)
                     : []
                 }
-                selectedPositions={selectedPositions}
+                selectedPositions={canAnswer ? selectedPositions : []}
                 onWaveformClick={handleWaveformClick}
                 onTogglePlay={audio.togglePlay}
                 showPlayControl
                 allowMultiSelect
               />
+            </View>
+
+            <View
+              className={classnames(
+                styles.answerSection,
+                canAnswer && styles.answerSectionExpanded
+              )}
+            >
               {!submitted && (
                 <Text className={styles.clickHint}>
                   👆 点击波形上的违规位置（已选{selectedPositions.length}处）
                 </Text>
               )}
-            </View>
 
-            <View
-              className={classnames(
-                styles.questionSection,
-                !canAnswer && styles.questionSectionDisabled
-              )}
-            >
               <View className={styles.questionCard}>
                 <Text className={styles.questionLabel}>项目风险告知是否完整？</Text>
                 <View className={styles.judgeRow}>
@@ -245,10 +249,9 @@ const DeductionPage: React.FC = () => {
                     className={classnames(
                       styles.judgeBtn,
                       styles.judgeBtnComplete,
-                      riskAnswer === true && styles.judgeBtnSelected,
-                      !canAnswer && styles.judgeBtnDisabled
+                      riskAnswer === true && styles.judgeBtnSelected
                     )}
-                    onClick={() => canAnswer && !submitted && setRiskAnswer(true)}
+                    onClick={() => !submitted && setRiskAnswer(true)}
                   >
                     <Text style={{ color: '#fff', fontSize: '28rpx' }}>完整</Text>
                   </View>
@@ -256,10 +259,9 @@ const DeductionPage: React.FC = () => {
                     className={classnames(
                       styles.judgeBtn,
                       styles.judgeBtnIncomplete,
-                      riskAnswer === false && styles.judgeBtnSelected,
-                      !canAnswer && styles.judgeBtnDisabled
+                      riskAnswer === false && styles.judgeBtnSelected
                     )}
-                    onClick={() => canAnswer && !submitted && setRiskAnswer(false)}
+                    onClick={() => !submitted && setRiskAnswer(false)}
                   >
                     <Text style={{ fontSize: '28rpx' }}>不完整</Text>
                   </View>
@@ -270,29 +272,41 @@ const DeductionPage: React.FC = () => {
         </View>
       )}
 
-      <View className={styles.submitRow}>
-        {submitted ? (
-          <View className={classnames(styles.submitBtn)} onClick={handleReset}>
-            <Text style={{ color: '#fff', fontSize: '28rpx' }}>下一题</Text>
-          </View>
-        ) : (
-          <View
-            className={classnames(
-              styles.submitBtn,
-              (!canAnswer || (selectedPositions.length === 0 && riskAnswer === null)) && styles.submitBtnDisabled
-            )}
-            onClick={handleSubmit}
-          >
-            <Text style={{ color: '#fff', fontSize: '28rpx' }}>提交判断</Text>
-          </View>
-        )}
-      </View>
+      {canAnswer && (
+        <View className={styles.submitRow}>
+          {submitted ? (
+            <View className={classnames(styles.submitBtn)} onClick={handleReset}>
+              <Text style={{ color: '#fff', fontSize: '28rpx' }}>下一题</Text>
+            </View>
+          ) : (
+            <View
+              className={classnames(
+                styles.submitBtn,
+                (selectedPositions.length === 0 && riskAnswer === null) && styles.submitBtnDisabled
+              )}
+              onClick={handleSubmit}
+            >
+              <Text style={{ color: '#fff', fontSize: '28rpx' }}>提交判断</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {!canAnswer && !submitted && (
+        <View className={styles.listenTipBar}>
+          <Text className={styles.listenTipText}>
+            🎧 请先完整听完录音再作答
+          </Text>
+        </View>
+      )}
 
       {submitted && currentRecording && (
         <View className={styles.resultSection}>
-          <View className={styles.currentRecordInfo}>
-            <Text className={styles.currentRecordInfoTitle}>📊 {currentRecording.title} 质检结果</Text>
+          <View className={styles.reviewHeader}>
+            <Text className={styles.reviewTitle}>📊 本次练习复盘</Text>
+            <Text className={styles.reviewSubtitle}>{currentRecording.title}</Text>
           </View>
+
           <View className={styles.scoreCard}>
             <Text
               className={classnames(
@@ -307,39 +321,141 @@ const DeductionPage: React.FC = () => {
             </Text>
           </View>
 
-          {hitResults.map((result, idx) => (
-            <View key={result.violation.id} className={styles.resultCard}>
-              <View className={styles.resultHeader}>
-                <Text className={styles.resultIcon}>
-                  {result.hit ? '✅' : '❌'}
-                </Text>
-                <Text
-                  className={classnames(
-                    styles.resultTitle,
-                    result.hit ? styles.resultTitleCorrect : styles.resultTitleWrong
-                  )}
-                >
-                  {result.hit ? `命中违规 #${idx + 1}` : `漏选违规 #${idx + 1}`}
-                </Text>
-                <Text className={styles.resultPoints}>
-                  {result.hit ? `+${result.violation.deductionPoints}分` : `-${result.violation.deductionPoints}分`}
-                </Text>
-              </View>
-              <View
-                className={styles.violationCategory}
-                style={{ background: VIOLATION_CATEGORY_COLOR[result.violation.category] }}
-              >
-                <Text style={{ fontSize: '22rpx' }}>
-                  {VIOLATION_CATEGORY_MAP[result.violation.category]}
-                </Text>
-              </View>
-              <Text className={styles.violationText}>{result.violation.text}</Text>
-              <View className={styles.standardAnswer}>
-                <Text className={styles.standardLabel}>标准答案</Text>
-                <Text className={styles.standardText}>{result.violation.standardAnswer}</Text>
-              </View>
+          <View className={styles.reviewSection}>
+            <Text className={styles.reviewSectionTitle}>📈 错题分类统计</Text>
+            {(() => {
+              const catMap = new Map<string, { wrong: number; total: number; label: string }>();
+              currentRecording.violations.forEach((v) => {
+                if (!catMap.has(v.category)) {
+                  catMap.set(v.category, {
+                    wrong: 0,
+                    total: 0,
+                    label: VIOLATION_CATEGORY_MAP[v.category]
+                  });
+                }
+                const cat = catMap.get(v.category)!;
+                cat.total += 1;
+                const wasHit = selectedPositions.some((p) => Math.abs(p - v.position) <= 2);
+                if (!wasHit) cat.wrong += 1;
+              });
+              if (!isRiskAnswerCorrect) {
+                if (!catMap.has('risk_concealment')) {
+                  catMap.set('risk_concealment', {
+                    wrong: 0,
+                    total: 0,
+                    label: VIOLATION_CATEGORY_MAP.risk_concealment
+                  });
+                }
+                const cat = catMap.get('risk_concealment')!;
+                cat.total += 1;
+                cat.wrong += 1;
+              }
+              return Array.from(catMap.entries()).map(([cat, data]) => (
+                <View key={cat} className={styles.categoryStatItem}>
+                  <View
+                    className={styles.categoryStatTag}
+                    style={{ background: VIOLATION_CATEGORY_COLOR[cat as keyof typeof VIOLATION_CATEGORY_COLOR] }}
+                  >
+                    <Text style={{ fontSize: '22rpx' }}>{data.label}</Text>
+                  </View>
+                  <Text className={styles.categoryStatText}>
+                    错{data.wrong} / 共{data.total}
+                  </Text>
+                  <View className={styles.categoryStatBarBg}>
+                    <View
+                      className={styles.categoryStatBarFill}
+                      style={{
+                        width: `${data.total > 0 ? ((data.total - data.wrong) / data.total) * 100 : 100}%`,
+                        background: data.wrong === 0 ? '#10B981' : data.wrong === data.total ? '#EF4444' : '#F59E0B'
+                      }}
+                    />
+                  </View>
+                </View>
+              ));
+            })()}
+          </View>
+
+          <View className={styles.reviewSection}>
+            <Text className={styles.reviewSectionTitle}>💡 建议复听时间点</Text>
+            <View className={styles.reviewTimestamps}>
+              {currentRecording.violations
+                .filter((v) => !selectedPositions.some((p) => Math.abs(p - v.position) <= 2))
+                .slice(0, 4)
+                .map((v) => (
+                  <View key={v.id} className={styles.timestampChip}>
+                    <Text className={styles.timestampChipText}>
+                      {Math.floor((v.position / 60) * currentRecording.duration / 60)}:{Math.floor(((v.position / 60) * currentRecording.duration) % 60).toString().padStart(2, '0')}
+                    </Text>
+                    <Text className={styles.timestampChipLabel}>
+                      {VIOLATION_CATEGORY_MAP[v.category]}
+                    </Text>
+                  </View>
+                ))}
+              {currentRecording.violations.filter((v) =>
+                !selectedPositions.some((p) => Math.abs(p - v.position) <= 2)
+              ).length === 0 && (
+                <Text className={styles.reviewEmpty}>全部命中！没有需要复听的内容🎉</Text>
+              )}
             </View>
-          ))}
+          </View>
+
+          <View className={styles.reviewSection}>
+            <Text className={styles.reviewSectionTitle}>🎯 命中与漏选详情</Text>
+            {hitResults.map((result, idx) => (
+              <View key={result.violation.id} className={styles.resultCard}>
+                <View className={styles.resultHeader}>
+                  <Text className={styles.resultIcon}>
+                    {result.hit ? '✅' : '❌'}
+                  </Text>
+                  <Text
+                    className={classnames(
+                      styles.resultTitle,
+                      result.hit ? styles.resultTitleCorrect : styles.resultTitleWrong
+                    )}
+                  >
+                    {result.hit ? `命中违规 #${idx + 1}` : `漏选违规 #${idx + 1}`}
+                  </Text>
+                  <Text className={styles.resultPoints}>
+                    {result.hit ? `+${result.violation.deductionPoints}分` : `-${result.violation.deductionPoints}分`}
+                  </Text>
+                </View>
+                <View
+                  className={styles.violationCategory}
+                  style={{ background: VIOLATION_CATEGORY_COLOR[result.violation.category] }}
+                >
+                  <Text style={{ fontSize: '22rpx' }}>
+                    {VIOLATION_CATEGORY_MAP[result.violation.category]}
+                  </Text>
+                </View>
+                <Text className={styles.violationText}>{result.violation.text}</Text>
+                <View className={styles.standardAnswer}>
+                  <Text className={styles.standardLabel}>标准答案</Text>
+                  <Text className={styles.standardText}>{result.violation.standardAnswer}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View className={styles.reviewActions}>
+            <View
+              className={classnames(styles.reviewBtn, styles.reviewBtnSecondary)}
+              onClick={handleReset}
+            >
+              <Text style={{ fontSize: '28rpx' }}>下一题</Text>
+            </View>
+            <View
+              className={classnames(styles.reviewBtn, styles.reviewBtnPrimary)}
+              onClick={() => {
+                audio.stop();
+                audio.markReset();
+                setSelectedPositions([]);
+                setRiskAnswer(null);
+                setSubmitted(false);
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: '28rpx' }}>再练一次</Text>
+            </View>
+          </View>
         </View>
       )}
     </View>

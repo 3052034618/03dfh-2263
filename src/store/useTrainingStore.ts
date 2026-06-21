@@ -1,9 +1,19 @@
 import { create } from 'zustand';
 import Taro from '@tarojs/taro';
-import type { DailyTask, ChallengeLevel, DeductionItem, UserProfile, WeaknessItem, MistakeRecord, MentorReview } from '@/types';
+import type {
+  DailyTask,
+  ChallengeLevel,
+  DeductionItem,
+  UserProfile,
+  WeaknessItem,
+  MistakeRecord,
+  MentorReview,
+  PracticeTask,
+  RecordingPracticeRecord
+} from '@/types';
 import { VIOLATION_CATEGORY_MAP } from '@/types';
 import { dailyTasks as mockDailyTasks } from '@/data/dailyTasks';
-import { challengeLevels as mockChallengeLevels } from '@/data/recordings';
+import { challengeLevels as mockChallengeLevels, recordings } from '@/data/recordings';
 import { deductionItems as mockDeductionItems } from '@/data/deductions';
 import { currentUser as mockUser } from '@/data/user';
 import { mentorReviews as mockReviews } from '@/data/reviews';
@@ -26,6 +36,31 @@ const initialUser = {
   qualificationScore: initialQualificationScore,
   qualificationMet: mockUser.passRate >= initialQualificationScore
 };
+
+const mockPracticeTasks: PracticeTask[] = [
+  {
+    id: 'pt-001',
+    mentorName: '李老师',
+    mentorAvatar: 'https://picsum.photos/id/64/200/200',
+    recordingId: 'rec-004',
+    recordingTitle: '吸脂咨询 - 风险告知检查',
+    note: '重点关注风险告知话术，3处违规都要找出来，下周抽查',
+    date: '2026-06-20',
+    completed: false
+  },
+  {
+    id: 'pt-002',
+    mentorName: '王老师',
+    mentorAvatar: 'https://picsum.photos/id/91/200/200',
+    recordingId: 'rec-002',
+    recordingTitle: '隆鼻咨询 - 效果承诺识别',
+    note: '复习效果承诺类违规识别，特别是"保证"类话术',
+    date: '2026-06-18',
+    completed: true,
+    lastScore: 85,
+    completedDate: '2026-06-19'
+  }
+];
 
 const computeWeaknessItems = (mistakes: MistakeRecord[], baseWeakness: WeaknessItem[]): WeaknessItem[] => {
   const categories = ['price_objection', 'efficacy_promise', 'postoperative_care', 'risk_concealment'] as const;
@@ -65,6 +100,7 @@ interface TrainingState {
   mistakes: MistakeRecord[];
   weaknessItems: WeaknessItem[];
   mentorReviews: MentorReview[];
+  practiceTasks: PracticeTask[];
   selectedViolationCategory: string;
 
   completeDailyTask: (taskId: string, score: number) => void;
@@ -72,6 +108,9 @@ interface TrainingState {
   answerDeductionItem: (itemId: string, correct: boolean) => void;
   addMistake: (mistake: Omit<MistakeRecord, 'id' | 'timestamp'>) => void;
   addMentorReview: (review: Omit<MentorReview, 'id' | 'date'>) => void;
+  addPracticeTask: (task: Omit<PracticeTask, 'id' | 'date' | 'completed'>) => void;
+  completePracticeTask: (taskId: string, score: number) => void;
+  recordPractice: (recordingId: string, score: number) => void;
   setQualificationScore: (score: number) => void;
   setViolationCategory: (category: string) => void;
 }
@@ -84,6 +123,7 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
   mistakes: [],
   weaknessItems: mockWeakness,
   mentorReviews: [...mockReviews],
+  practiceTasks: [...mockPracticeTasks],
   selectedViolationCategory: 'all',
 
   completeDailyTask: (taskId, score) =>
@@ -137,6 +177,49 @@ export const useTrainingStore = create<TrainingState>((set, get) => ({
       mentorReviews: [newReview, ...state.mentorReviews]
     }));
     console.info('[Store] Review added', newReview);
+  },
+
+  addPracticeTask: (task) => {
+    const newTask: PracticeTask = {
+      ...task,
+      id: `pt-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      completed: false
+    };
+    set((state) => ({
+      practiceTasks: [newTask, ...state.practiceTasks]
+    }));
+    console.info('[Store] Practice task added', newTask);
+  },
+
+  completePracticeTask: (taskId, score) => {
+    set((state) => ({
+      practiceTasks: state.practiceTasks.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              completed: true,
+              lastScore: score,
+              completedDate: new Date().toISOString().split('T')[0]
+            }
+          : t
+      )
+    }));
+  },
+
+  recordPractice: (recordingId, score) => {
+    const state = get();
+    const rec = recordings.find((r) => r.id === recordingId);
+    if (!rec) return;
+
+    const pendingTask = state.practiceTasks.find(
+      (t) => t.recordingId === recordingId && !t.completed
+    );
+    if (pendingTask) {
+      get().completePracticeTask(pendingTask.id, score);
+    }
+
+    console.info('[Store] Practice recorded', { recordingId, score });
   },
 
   setQualificationScore: (score) => {

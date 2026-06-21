@@ -381,3 +381,245 @@
   pointer-events: none;
   filter: grayscale(0.3);
 }
+
+.answerSection {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-20rpx);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &Expanded {
+    max-height: 1200rpx;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.listenTipBar {
+  margin-top: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.04));
+  border: 2rpx dashed rgba(99, 102, 241, 0.3);
+  border-radius: $radius-md;
+  text-align: center;
+}
+
+.listenTipText {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.reviewTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  text-align: center;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.reviewSubtitle {
+  text-align: center;
+  margin-bottom: $spacing-md;
+}
+
+.reviewSection {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.reviewSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.reviewEmpty {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+  padding: $spacing-md 0;
+  display: block;
+}
+
+.reviewItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.reviewItemHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.reviewItemIcon {
+  font-size: $font-size-lg;
+}
+
+.reviewItemTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.reviewItemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.reviewItemLabel {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.reviewItemWrong {
+  font-size: $font-size-sm;
+  color: $color-error;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.reviewItemCorrect {
+  font-size: $font-size-sm;
+  color: $color-success;
+  display: block;
+}
+
+.violationReviewItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.violationReviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
+}
+
+.violationReviewIndex {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.violationReviewTag {
+  padding: 2rpx 12rpx;
+  border-radius: $radius-round;
+}
+
+.violationReviewText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.violationReviewTime {
+  margin-bottom: $spacing-xs;
+}
+
+.standardAnswer {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 4rpx solid $color-success;
+  padding: $spacing-sm $spacing-md;
+  border-radius: 0 $radius-sm $radius-sm 0;
+}
+
+.standardLabel {
+  font-size: 22rpx;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.standardText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+  line-height: 1.5;
+}
+
+.reviewTimestamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.timestampChip {
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  border-radius: $radius-round;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  min-width: 120rpx;
+}
+
+.timestampChipText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+  display: block;
+  line-height: 1.2;
+}
+
+.timestampChipLabel {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  margin-top: 2rpx;
+}
+
+.reviewActions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+}
+
+.reviewBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.reviewBtnPrimary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  color: $color-text-white;
+}
+
+.reviewBtnSecondary {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+}

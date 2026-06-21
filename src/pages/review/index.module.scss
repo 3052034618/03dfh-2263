@@ -39,7 +39,255 @@
 }
 
 .reviewList {
+  padding: 0 $spacing-lg;
+  margin-top: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.taskSection {
+  padding: 0 $spacing-lg;
+  margin-top: $spacing-lg;
+}
+
+.taskTabs {
+  display: flex;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 6rpx;
+  margin-bottom: $spacing-md;
+}
+
+.taskTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm 0;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+}
+
+.taskTabActive {
+  background: $color-bg-card;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+}
+
+.taskTabText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.taskTabActive .taskTabText {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.taskCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
   padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.taskHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.taskAvatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-sm;
+  background: $color-bg-hover;
+}
+
+.taskInfo {
+  flex: 1;
+}
+
+.taskMentor {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.taskDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.taskScoreBadge {
+  background: linear-gradient(135deg, #10B981, #34D399);
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.taskScoreText {
+  font-size: $font-size-xs;
+  color: #fff;
+  font-weight: $font-weight-bold;
+}
+
+.taskRecording {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.taskNote {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.taskActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.taskGoBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-lg;
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.taskDoneText {
+  font-size: $font-size-sm;
+  color: #10B981;
+  font-weight: $font-weight-medium;
+  margin-right: auto;
+}
+
+.taskRetryBtn {
+  @include button-reset;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    background: rgba(99, 102, 241, 0.2);
+  }
+}
+
+.taskEmpty {
+  padding: $spacing-xxl 0;
+  text-align: center;
+}
+
+.taskEmptyText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.assignSection {
+  padding: $spacing-lg;
+}
+
+.assignCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.assignTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.assignField {
+  margin-bottom: $spacing-md;
+}
+
+.assignLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.assignPicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.assignPickerText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.assignPickerArrow {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.assignArea {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  min-height: 140rpx;
+  margin-bottom: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.assignBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+  border-radius: $radius-button;
+  color: $color-text-white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+
+  &:active {
+    opacity: 0.9;
+  }
 }
 
 .reviewCard {

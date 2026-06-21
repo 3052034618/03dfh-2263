@@ -5,6 +5,10 @@
   padding-bottom: 120rpx;
 }
 
+.scrollView {
+  height: 100vh;
+}
+
 .searchBar {
   margin: $spacing-lg;
   background: $color-bg-card;
@@ -205,19 +209,27 @@
 .weaknessHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: $spacing-sm;
+  cursor: pointer;
 }
 
 .weaknessCategory {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
 }
 
 .weaknessAccuracy {
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
+  margin-right: $spacing-sm;
+}
+
+.expandIcon {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
 }
 
 .weaknessBarBg {
@@ -238,7 +250,6 @@
   font-size: $font-size-xs;
   color: $color-text-tertiary;
   display: block;
-  margin-bottom: $spacing-sm;
 }
 
 .weaknessMistakes {
@@ -254,4 +265,104 @@
   background: #FEE2E2;
   border-radius: $radius-xs;
   @include text-ellipsis;
+}
+
+.weaknessDetail {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.mistakeList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.mistakeListTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.mistakeItem {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.mistakeItemHeader {
+  margin-bottom: $spacing-xs;
+}
+
+.mistakeRecording {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.mistakeItemText {
+  font-size: $font-size-xs;
+  color: $color-accent-coral;
+  margin-bottom: $spacing-sm;
+  display: block;
+  line-height: $line-height-normal;
+}
+
+.mistakeItemActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs 0;
+  background: $color-bg-card;
+  border: 1rpx solid $color-divider;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.actionBtnText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.actionBtnPrimary {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1rpx solid rgba(99, 102, 241, 0.3);
+}
+
+.actionBtnPrimaryText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.noMistakeText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+  padding: $spacing-lg 0;
+}
+
+.scriptListTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.bottomPadding {
+  height: $spacing-xxl;
 }
