@@ -3,7 +3,10 @@ import { View, Text, Image, Textarea } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
+import { challengeLevels } from '@/data/recordings';
 import styles from './index.module.scss';
+
+const STORAGE_KEY_TARGET_RECORDING = 'target_recording_id';
 
 const ReviewPage: React.FC = () => {
   const { weaknessItems, mentorReviews, userProfile } = useTrainingStore();
@@ -35,6 +38,16 @@ const ReviewPage: React.FC = () => {
 
   const handleListenRecording = (recordingId: string) => {
     if (!recordingId) return;
+    const level = challengeLevels.find((l) => l.recordingId === recordingId);
+    if (!level) {
+      Taro.showToast({ title: '录音未关联关卡', icon: 'none' });
+      return;
+    }
+    try {
+      Taro.setStorageSync(STORAGE_KEY_TARGET_RECORDING, recordingId);
+    } catch (e) {
+      console.error('[Review] Save target failed', e);
+    }
     Taro.switchTab({ url: '/pages/challenge/index' });
   };
 

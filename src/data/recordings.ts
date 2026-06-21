@@ -1,5 +1,18 @@
 import type { Recording, ChallengeLevel } from '@/types';
 
+const PIXABAY_AUDIOS = [
+  'https://cdn.pixabay.com/audio/2024/11/01/audio_071f2db7a2.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/24/audio_e968b5e80d.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/15/audio_e1e14e7f54.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/25/audio_d973f75bd1.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/22/audio_951b1c1b32.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/02/audio_f2f9ef42d7.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/09/audio_3f57a340a7.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/20/audio_9a3e07ab17.mp3',
+  'https://cdn.pixabay.com/audio/2024/11/06/audio_fc42f7d2e6.mp3',
+  'https://cdn.pixabay.com/audio/2024/10/18/audio_0ab4d3c589.mp3'
+];
+
 const generateWaveform = (length: number): number[] => {
   const data: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -15,6 +28,7 @@ export const recordings: Recording[] = [
     consultantName: '张咨询师',
     customerName: '顾客A',
     duration: 180,
+    audioUrl: PIXABAY_AUDIOS[0],
     level: 1,
     category: '面部轮廓',
     thumbnail: 'https://picsum.photos/id/64/200/200',
@@ -50,6 +64,7 @@ export const recordings: Recording[] = [
     consultantName: '李咨询师',
     customerName: '顾客B',
     duration: 240,
+    audioUrl: PIXABAY_AUDIOS[1],
     level: 2,
     category: '鼻部整形',
     thumbnail: 'https://picsum.photos/id/91/200/200',
@@ -85,6 +100,7 @@ export const recordings: Recording[] = [
     consultantName: '王咨询师',
     customerName: '顾客C',
     duration: 200,
+    audioUrl: PIXABAY_AUDIOS[2],
     level: 2,
     category: '皮肤管理',
     thumbnail: 'https://picsum.photos/id/338/200/200',
@@ -120,6 +136,7 @@ export const recordings: Recording[] = [
     consultantName: '赵咨询师',
     customerName: '顾客D',
     duration: 300,
+    audioUrl: PIXABAY_AUDIOS[3],
     level: 3,
     category: '身体塑形',
     thumbnail: 'https://picsum.photos/id/1027/200/200',
@@ -163,6 +180,7 @@ export const recordings: Recording[] = [
     consultantName: '孙咨询师',
     customerName: '顾客E',
     duration: 160,
+    audioUrl: PIXABAY_AUDIOS[4],
     level: 1,
     category: '眼部整形',
     thumbnail: 'https://picsum.photos/id/177/200/200',
@@ -190,6 +208,7 @@ export const recordings: Recording[] = [
     consultantName: '周咨询师',
     customerName: '顾客F',
     duration: 360,
+    audioUrl: PIXABAY_AUDIOS[5],
     level: 3,
     category: '胸部整形',
     thumbnail: 'https://picsum.photos/id/1/200/200',
@@ -241,6 +260,7 @@ export const recordings: Recording[] = [
     consultantName: '吴咨询师',
     customerName: '顾客G',
     duration: 150,
+    audioUrl: PIXABAY_AUDIOS[6],
     level: 2,
     category: '注射美容',
     thumbnail: 'https://picsum.photos/id/8/200/200',
@@ -268,6 +288,7 @@ export const recordings: Recording[] = [
     consultantName: '郑咨询师',
     customerName: '顾客H',
     duration: 280,
+    audioUrl: PIXABAY_AUDIOS[7],
     level: 3,
     category: '毛发移植',
     thumbnail: 'https://picsum.photos/id/9/200/200',
@@ -303,6 +324,7 @@ export const recordings: Recording[] = [
     consultantName: '冯咨询师',
     customerName: '顾客I',
     duration: 130,
+    audioUrl: PIXABAY_AUDIOS[8],
     level: 1,
     category: '皮肤管理',
     thumbnail: 'https://picsum.photos/id/6/200/200',
@@ -330,6 +352,7 @@ export const recordings: Recording[] = [
     consultantName: '陈咨询师',
     customerName: '顾客J',
     duration: 400,
+    audioUrl: PIXABAY_AUDIOS[9],
     level: 3,
     category: '颌面外科',
     thumbnail: 'https://picsum.photos/id/119/200/200',

@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useTrainingStore } from '@/store/useTrainingStore';
-import { recordings } from '@/data/recordings';
+import { recordings, challengeLevels } from '@/data/recordings';
 import styles from './index.module.scss';
 
-const SAMPLE_AUDIO_URL = 'https://cdn.pixabay.com/audio/2024/11/01/audio_071f2db7a2.mp3';
+const STORAGE_KEY_TARGET_RECORDING = 'target_recording_id';
 
 const ChallengePage: React.FC = () => {
-  const { challengeLevels } = useTrainingStore();
+  const router = useRouter();
+  const storeLevels = useTrainingStore((s) => s.challengeLevels);
   const [activeLevel, setActiveLevel] = useState<string | null>(null);
   const [selectedDemand, setSelectedDemand] = useState<number | null>(null);
   const [exaggerationAnswer, setExaggerationAnswer] = useState<boolean | null>(null);
@@ -19,21 +21,66 @@ const ChallengePage: React.FC = () => {
   const [audioUrl, setAudioUrl] = useState('');
   const audio = useAudioPlayer(audioUrl);
 
-  const activeRecording = activeLevel
-    ? recordings.find((r) => r.id === challengeLevels.find((l) => l.id === activeLevel)?.recordingId)
+  const openLevelByRecordingId = (recordingId: string) => {
+    const level = challengeLevels.find((l) => l.recordingId === recordingId);
+    if (level) {
+      const storeLevel = storeLevels.find((s) => s.id === level.id);
+      if (!storeLevel || !storeLevel.locked) {
+        setTimeout(() => {
+          audio.stop();
+          audio.markReset();
+          setActiveLevel(level.id);
+          setSelectedDemand(null);
+          setExaggerationAnswer(null);
+          setShowResult(false);
+          setSubmitted(false);
+        }, 80);
+      } else {
+        Taro.showToast({ title: '该关卡尚未解锁', icon: 'none' });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const autoRecordingId = router.params.recordingId;
+    if (autoRecordingId) {
+      openLevelByRecordingId(autoRecordingId);
+    }
+  }, []);
+
+  useDidShow(() => {
+    try {
+      const targetId = Taro.getStorageSync(STORAGE_KEY_TARGET_RECORDING);
+      if (targetId) {
+        Taro.removeStorageSync(STORAGE_KEY_TARGET_RECORDING);
+        openLevelByRecordingId(targetId);
+      }
+    } catch (e) {
+      console.error('[Challenge] Read target failed', e);
+    }
+  });
+
+  const activeLevelData = activeLevel
+    ? storeLevels.find((l) => l.id === activeLevel)
+    : null;
+  const activeRecording = activeLevelData
+    ? recordings.find((r) => r.id === activeLevelData.recordingId)
     : null;
 
   useEffect(() => {
     if (activeRecording) {
-      setAudioUrl(SAMPLE_AUDIO_URL);
+      setAudioUrl(activeRecording.audioUrl);
     } else {
       setAudioUrl('');
     }
   }, [activeRecording]);
 
+  const canAnswer = audio.isFullyPlayed;
+
   const handleLevelClick = (levelId: string, locked: boolean) => {
     if (locked) return;
     audio.stop();
+    audio.markReset();
     setActiveLevel(levelId);
     setSelectedDemand(null);
     setExaggerationAnswer(null);
@@ -43,6 +90,10 @@ const ChallengePage: React.FC = () => {
 
   const handleSubmit = () => {
     if (selectedDemand === null || exaggerationAnswer === null) return;
+    if (!canAnswer) {
+      Taro.showToast({ title: '请先完整听完录音', icon: 'none' });
+      return;
+    }
     setSubmitted(true);
     audio.pause();
 
@@ -82,6 +133,7 @@ const ChallengePage: React.FC = () => {
 
   const handleCloseModal = () => {
     audio.stop();
+    audio.markReset();
     setActiveLevel(null);
     setSelectedDemand(null);
     setExaggerationAnswer(null);
@@ -116,7 +168,7 @@ const ChallengePage: React.FC = () => {
       </View>
 
       <View className={styles.levelList}>
-        {challengeLevels.map((level) => (
+        {storeLevels.map((level) => (
           <View
             key={level.id}
             className={classnames(
@@ -173,6 +225,15 @@ const ChallengePage: React.FC = () => {
 
                 <View className={styles.questionCard}>
                   <Text className={styles.questionLabel}>🎧 听录音后作答</Text>
+                  {!canAnswer && (
+                    <Text className={styles.listenHint}>
+                      ⏳ 请先完整听完录音再答题
+                      （{Math.round(audio.progress * 100)}%）
+                    </Text>
+                  )}
+                  {canAnswer && (
+                    <Text className={styles.listenDoneHint}>✅ 录音已听完，可以答题</Text>
+                  )}
                   <AudioWaveform
                     waveformData={activeRecording.waveformData}
                     progress={audio.progress}
@@ -185,7 +246,12 @@ const ChallengePage: React.FC = () => {
                   />
                 </View>
 
-                <View className={styles.questionCard}>
+                <View
+                  className={classnames(
+                    styles.questionCard,
+                    !canAnswer && styles.questionCardDisabled
+                  )}
+                >
                   <Text className={styles.questionLabel}>1. 顾客的核心诉求是什么？</Text>
                   <View className={styles.optionsGrid}>
                     {activeRecording.demandOptions.map((option, idx) => (
@@ -197,7 +263,7 @@ const ChallengePage: React.FC = () => {
                           submitted && idx === activeRecording.correctDemandIndex && styles.optionBtnCorrect,
                           submitted && selectedDemand === idx && idx !== activeRecording.correctDemandIndex && styles.optionBtnWrong
                         )}
-                        onClick={() => !submitted && setSelectedDemand(idx)}
+                        onClick={() => canAnswer && !submitted && setSelectedDemand(idx)}
                       >
                         <Text style={{ fontSize: '24rpx' }}>{option}</Text>
                       </View>
@@ -205,16 +271,22 @@ const ChallengePage: React.FC = () => {
                   </View>
                 </View>
 
-                <View className={styles.questionCard}>
+                <View
+                  className={classnames(
+                    styles.questionCard,
+                    !canAnswer && styles.questionCardDisabled
+                  )}
+                >
                   <Text className={styles.questionLabel}>2. 咨询师是否存在夸大疗效？</Text>
                   <View className={styles.judgeRow}>
                     <View
                       className={classnames(
                         styles.judgeBtn,
                         styles.judgeBtnYes,
-                        exaggerationAnswer === true && styles.optionBtnSelected
+                        exaggerationAnswer === true && styles.optionBtnSelected,
+                        !canAnswer && styles.judgeBtnDisabled
                       )}
-                      onClick={() => !submitted && setExaggerationAnswer(true)}
+                      onClick={() => canAnswer && !submitted && setExaggerationAnswer(true)}
                     >
                       <Text style={{ color: '#fff', fontSize: '28rpx' }}>存在夸大</Text>
                     </View>
@@ -222,9 +294,10 @@ const ChallengePage: React.FC = () => {
                       className={classnames(
                         styles.judgeBtn,
                         styles.judgeBtnNo,
-                        exaggerationAnswer === false && styles.optionBtnSelected
+                        exaggerationAnswer === false && styles.optionBtnSelected,
+                        !canAnswer && styles.judgeBtnDisabled
                       )}
-                      onClick={() => !submitted && setExaggerationAnswer(false)}
+                      onClick={() => canAnswer && !submitted && setExaggerationAnswer(false)}
                     >
                       <Text style={{ fontSize: '28rpx' }}>不存在</Text>
                     </View>
@@ -239,7 +312,7 @@ const ChallengePage: React.FC = () => {
                     className={classnames(
                       styles.modalBtn,
                       styles.modalBtnPrimary,
-                      (selectedDemand === null || exaggerationAnswer === null) && { opacity: 0.5 }
+                      (!canAnswer || selectedDemand === null || exaggerationAnswer === null) && { opacity: 0.5 }
                     )}
                     onClick={handleSubmit}
                   >

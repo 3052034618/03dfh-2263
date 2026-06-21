@@ -15,6 +15,7 @@ export interface Recording {
   consultantName: string;
   customerName: string;
   duration: number;
+  audioUrl: string;
   level: number;
   category: string;
   thumbnail: string;

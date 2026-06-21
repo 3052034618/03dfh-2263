@@ -353,3 +353,31 @@
 .resultStarIcon {
   font-size: 48rpx;
 }
+
+.questionCardDisabled {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.2);
+}
+
+.listenHint {
+  font-size: $font-size-xs;
+  color: $color-accent-gold;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.listenDoneHint {
+  font-size: $font-size-xs;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.judgeBtnDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}

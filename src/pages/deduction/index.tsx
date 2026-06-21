@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -8,8 +9,6 @@ import { recordings } from '@/data/recordings';
 import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
 import type { Violation } from '@/types';
 import styles from './index.module.scss';
-
-const SAMPLE_AUDIO_URL = 'https://cdn.pixabay.com/audio/2024/11/01/audio_071f2db7a2.mp3';
 
 interface HitResult {
   violation: Violation;
@@ -27,17 +26,51 @@ const DeductionPage: React.FC = () => {
   const audio = useAudioPlayer(audioUrl);
 
   const categories = ['all', 'price_objection', 'efficacy_promise', 'postoperative_care', 'risk_concealment'];
-  const availableRecordings = recordings.filter((r) => r.unlocked);
-  const currentRecording = availableRecordings[selectedRecordingIdx] || availableRecordings[0];
+  const allRecordings = recordings.filter((r) => r.unlocked);
+  const filteredRecordings =
+    categoryFilter === 'all'
+      ? allRecordings
+      : allRecordings.filter((r) =>
+          r.violations.some((v) => v.category === categoryFilter)
+        );
+
+  const currentRecording = filteredRecordings[selectedRecordingIdx] || filteredRecordings[0];
+
+  useEffect(() => {
+    setSelectedRecordingIdx(0);
+    setSelectedPositions([]);
+    setRiskAnswer(null);
+    setSubmitted(false);
+  }, [categoryFilter]);
 
   useEffect(() => {
     if (currentRecording) {
-      setAudioUrl(SAMPLE_AUDIO_URL);
+      setAudioUrl(currentRecording.audioUrl);
     }
   }, [currentRecording]);
 
+  useEffect(() => {
+    audio.markReset();
+  }, [currentRecording?.id]);
+
+  const canAnswer = audio.isFullyPlayed;
+
+  const handleRecordingChange = (idx: number) => {
+    if (idx === selectedRecordingIdx) return;
+    audio.stop();
+    audio.markReset();
+    setSelectedRecordingIdx(idx);
+    setSelectedPositions([]);
+    setRiskAnswer(null);
+    setSubmitted(false);
+  };
+
   const handleWaveformClick = (position: number) => {
     if (submitted) return;
+    if (!canAnswer) {
+      Taro.showToast({ title: '请先完整听完录音', icon: 'none' });
+      return;
+    }
     setSelectedPositions((prev) => {
       if (prev.includes(position)) {
         return prev.filter((p) => p !== position);
@@ -48,6 +81,10 @@ const DeductionPage: React.FC = () => {
 
   const handleSubmit = () => {
     if (selectedPositions.length === 0 && riskAnswer === null) return;
+    if (!canAnswer) {
+      Taro.showToast({ title: '请先完整听完录音', icon: 'none' });
+      return;
+    }
     setSubmitted(true);
     audio.pause();
 
@@ -80,6 +117,7 @@ const DeductionPage: React.FC = () => {
 
   const handleReset = () => {
     audio.stop();
+    audio.markReset();
     setSelectedPositions([]);
     setRiskAnswer(null);
     setSubmitted(false);
@@ -125,74 +163,112 @@ const DeductionPage: React.FC = () => {
         ))}
       </View>
 
-      <View className={styles.recordingSection}>
-        <View className={styles.recordingCard}>
-          <View className={styles.recordingHeader}>
-            <Text className={styles.recordingTitle}>{currentRecording?.title}</Text>
-            <View className={styles.recordingTag}>
-              <Text className={styles.recordingTagText}>
-                {currentRecording?.category}
-              </Text>
-            </View>
-          </View>
-
-          <View className={styles.waveformSection}>
-            <Text className={styles.waveformLabel}>
-              点击波形标记违规位置（可标记多个）
-            </Text>
-            <AudioWaveform
-              waveformData={currentRecording?.waveformData || []}
-              progress={audio.progress}
-              duration={currentRecording?.duration || 0}
-              currentTime={audio.currentTime}
-              isPlaying={audio.isPlaying}
-              violationPositions={
-                submitted
-                  ? currentRecording?.violations.map((v) => v.position) || []
-                  : []
-              }
-              selectedPositions={selectedPositions}
-              onWaveformClick={handleWaveformClick}
-              onTogglePlay={audio.togglePlay}
-              showPlayControl
-              allowMultiSelect
-            />
-            {!submitted && (
-              <Text className={styles.clickHint}>
-                👆 点击波形上的违规位置（已选{selectedPositions.length}处）
-              </Text>
+      <View className={styles.recordingSelectors}>
+        {filteredRecordings.map((rec, idx) => (
+          <View
+            key={rec.id}
+            className={classnames(
+              styles.recordingSelector,
+              selectedRecordingIdx === idx && styles.recordingSelectorActive,
+              rec.violations.length >= 3 && styles.recordingSelectorHot
             )}
+            onClick={() => handleRecordingChange(idx)}
+          >
+            <Text className={styles.recordingSelectorTitle}>{rec.title}</Text>
+            <Text className={styles.recordingSelectorMeta}>
+              {rec.violations.length}处违规 · {Math.round(rec.duration / 60)}分
+            </Text>
           </View>
+        ))}
+      </View>
 
-          <View className={styles.questionSection}>
-            <View className={styles.questionCard}>
-              <Text className={styles.questionLabel}>项目风险告知是否完整？</Text>
-              <View className={styles.judgeRow}>
-                <View
-                  className={classnames(
-                    styles.judgeBtn,
-                    styles.judgeBtnComplete,
-                    riskAnswer === true && styles.judgeBtnSelected
-                  )}
-                  onClick={() => !submitted && setRiskAnswer(true)}
-                >
-                  <Text style={{ color: '#fff', fontSize: '28rpx' }}>完整</Text>
-                </View>
-                <View
-                  className={classnames(
-                    styles.judgeBtn,
-                    styles.judgeBtnIncomplete,
-                    riskAnswer === false && styles.judgeBtnSelected
-                  )}
-                  onClick={() => !submitted && setRiskAnswer(false)}
-                >
-                  <Text style={{ fontSize: '28rpx' }}>不完整</Text>
+      {currentRecording && (
+        <View className={styles.recordingSection}>
+          <View className={styles.recordingCard}>
+            <View className={styles.recordingHeader}>
+              <Text className={styles.recordingTitle}>{currentRecording.title}</Text>
+              <View className={styles.recordingTag}>
+                <Text className={styles.recordingTagText}>
+                  {currentRecording.category}
+                </Text>
+              </View>
+            </View>
+
+            <View className={styles.waveformSection}>
+              <Text className={styles.waveformLabel}>
+                点击波形标记违规位置（可标记多个）
+              </Text>
+              {!canAnswer && !submitted && (
+                <Text className={styles.listenHint}>
+                  ⏳ 请先完整听完录音再标记（{Math.round(audio.progress * 100)}%）
+                </Text>
+              )}
+              {canAnswer && !submitted && (
+                <Text className={styles.listenDoneHint}>
+                  ✅ 录音已听完，可以标记违规位置
+                </Text>
+              )}
+              <AudioWaveform
+                waveformData={currentRecording.waveformData}
+                progress={audio.progress}
+                duration={currentRecording.duration}
+                currentTime={audio.currentTime}
+                isPlaying={audio.isPlaying}
+                violationPositions={
+                  submitted
+                    ? currentRecording.violations.map((v) => v.position)
+                    : []
+                }
+                selectedPositions={selectedPositions}
+                onWaveformClick={handleWaveformClick}
+                onTogglePlay={audio.togglePlay}
+                showPlayControl
+                allowMultiSelect
+              />
+              {!submitted && (
+                <Text className={styles.clickHint}>
+                  👆 点击波形上的违规位置（已选{selectedPositions.length}处）
+                </Text>
+              )}
+            </View>
+
+            <View
+              className={classnames(
+                styles.questionSection,
+                !canAnswer && styles.questionSectionDisabled
+              )}
+            >
+              <View className={styles.questionCard}>
+                <Text className={styles.questionLabel}>项目风险告知是否完整？</Text>
+                <View className={styles.judgeRow}>
+                  <View
+                    className={classnames(
+                      styles.judgeBtn,
+                      styles.judgeBtnComplete,
+                      riskAnswer === true && styles.judgeBtnSelected,
+                      !canAnswer && styles.judgeBtnDisabled
+                    )}
+                    onClick={() => canAnswer && !submitted && setRiskAnswer(true)}
+                  >
+                    <Text style={{ color: '#fff', fontSize: '28rpx' }}>完整</Text>
+                  </View>
+                  <View
+                    className={classnames(
+                      styles.judgeBtn,
+                      styles.judgeBtnIncomplete,
+                      riskAnswer === false && styles.judgeBtnSelected,
+                      !canAnswer && styles.judgeBtnDisabled
+                    )}
+                    onClick={() => canAnswer && !submitted && setRiskAnswer(false)}
+                  >
+                    <Text style={{ fontSize: '28rpx' }}>不完整</Text>
+                  </View>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
+      )}
 
       <View className={styles.submitRow}>
         {submitted ? (
@@ -203,7 +279,7 @@ const DeductionPage: React.FC = () => {
           <View
             className={classnames(
               styles.submitBtn,
-              (selectedPositions.length === 0 && riskAnswer === null) && styles.submitBtnDisabled
+              (!canAnswer || (selectedPositions.length === 0 && riskAnswer === null)) && styles.submitBtnDisabled
             )}
             onClick={handleSubmit}
           >
@@ -212,8 +288,11 @@ const DeductionPage: React.FC = () => {
         )}
       </View>
 
-      {submitted && (
+      {submitted && currentRecording && (
         <View className={styles.resultSection}>
+          <View className={styles.currentRecordInfo}>
+            <Text className={styles.currentRecordInfoTitle}>📊 {currentRecording.title} 质检结果</Text>
+          </View>
           <View className={styles.scoreCard}>
             <Text
               className={classnames(

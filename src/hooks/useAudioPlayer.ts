@@ -6,11 +6,13 @@ interface UseAudioPlayerReturn {
   currentTime: number;
   duration: number;
   progress: number;
+  isFullyPlayed: boolean;
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
   stop: () => void;
   seek: (position: number) => void;
+  markReset: () => void;
 }
 
 export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
@@ -18,8 +20,10 @@ export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isFullyPlayed, setIsFullyPlayed] = useState(false);
   const audioRef = useRef<Taro.InnerAudioContext | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fullyPlayedRef = useRef(false);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -33,14 +37,18 @@ export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
     timerRef.current = setInterval(() => {
       if (audioRef.current) {
         const ct = audioRef.current.currentTime;
-        const d = audioRef.current.duration;
+        const d = audioRef.current.duration || duration;
         setCurrentTime(ct);
         if (d > 0) {
           setProgress(ct / d);
+          if (!fullyPlayedRef.current && ct / d >= 0.98) {
+            fullyPlayedRef.current = true;
+            setIsFullyPlayed(true);
+          }
         }
       }
     }, 200);
-  }, [clearTimer]);
+  }, [clearTimer, duration]);
 
   useEffect(() => {
     return () => {
@@ -60,6 +68,8 @@ export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
     setIsPlaying(false);
     setCurrentTime(0);
     setProgress(0);
+    setIsFullyPlayed(false);
+    fullyPlayedRef.current = false;
 
     const audio = Taro.createInnerAudioContext();
     audio.src = url;
@@ -91,6 +101,8 @@ export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
       setCurrentTime(0);
       setProgress(0);
       clearTimer();
+      fullyPlayedRef.current = true;
+      setIsFullyPlayed(true);
     });
 
     audio.onError((err) => {
@@ -136,21 +148,30 @@ export const useAudioPlayer = (audioUrl?: string): UseAudioPlayerReturn => {
 
   const seek = useCallback((position: number) => {
     if (audioRef.current && duration > 0) {
-      audioRef.current.seek(position * duration);
-      setCurrentTime(position * duration);
-      setProgress(position);
+      const target = Math.max(0, Math.min(1, position));
+      const targetTime = target * duration;
+      audioRef.current.seek(targetTime);
+      setCurrentTime(targetTime);
+      setProgress(target);
     }
   }, [duration]);
+
+  const markReset = useCallback(() => {
+    setIsFullyPlayed(false);
+    fullyPlayedRef.current = false;
+  }, []);
 
   return {
     isPlaying,
     currentTime,
     duration,
     progress,
+    isFullyPlayed,
     play,
     pause,
     togglePlay,
     stop,
-    seek
+    seek,
+    markReset
   };
 };

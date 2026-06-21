@@ -319,3 +319,101 @@
   border-color: $color-primary;
   color: $color-text-white;
 }
+
+.recordingSelectors {
+  padding: 0 $spacing-lg $spacing-md;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.recordingSelector {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-md;
+  border: 2rpx solid $color-border;
+  min-width: 320rpx;
+  flex: 1;
+  transition: all $transition-fast;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.recordingSelectorActive {
+  border-color: $color-primary;
+  background: rgba(99, 102, 241, 0.06);
+  box-shadow: 0 0 0 2rpx rgba(99, 102, 241, 0.3);
+}
+
+.recordingSelectorHot {
+  position: relative;
+  border-color: #F59E0B;
+
+  &::after {
+    content: '🔥多违规';
+    position: absolute;
+    top: -12rpx;
+    right: 8rpx;
+    background: #F59E0B;
+    color: #fff;
+    font-size: 20rpx;
+    padding: 2rpx 12rpx;
+    border-radius: $radius-round;
+    line-height: 1.4;
+  }
+}
+
+.recordingSelectorTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.recordingSelectorMeta {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.listenHint {
+  font-size: $font-size-xs;
+  color: $color-accent-gold;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.listenDoneHint {
+  font-size: $font-size-xs;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.questionSectionDisabled {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.2);
+}
+
+.judgeBtnDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
+.currentRecordInfo {
+  margin-bottom: $spacing-md;
+}
+
+.currentRecordInfoTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
