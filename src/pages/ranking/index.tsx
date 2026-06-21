@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image } from '@tarojs/components';
 import classnames from 'classnames';
+import Taro from '@tarojs/taro';
 import RankingItem from '@/components/RankingItem';
 import { rankingUsers, classStats } from '@/data/rankings';
 import { useTrainingStore } from '@/store/useTrainingStore';
@@ -9,6 +10,7 @@ import styles from './index.module.scss';
 const RankingPage: React.FC = () => {
   const { userProfile } = useTrainingStore();
   const [selectedClass, setSelectedClass] = useState(userProfile.className);
+  const [isEditingQualification, setIsEditingQualification] = useState(false);
 
   const currentClassUsers = rankingUsers
     .filter((u) => u.className === selectedClass)
@@ -19,6 +21,21 @@ const RankingPage: React.FC = () => {
 
   const top3 = currentClassUsers.slice(0, 3);
   const rest = currentClassUsers.slice(3);
+
+  const qualificationProgress = Math.min(
+    100,
+    Math.round((userProfile.passRate / userProfile.qualificationScore) * 100)
+  );
+
+  const handleAdjustQualification = (delta: number) => {
+    const newScore = Math.max(50, Math.min(100, userProfile.qualificationScore + delta));
+    useTrainingStore.getState().setQualificationScore(newScore);
+  };
+
+  const handleSaveQualification = () => {
+    setIsEditingQualification(false);
+    Taro.showToast({ title: '合格线已更新', icon: 'success' });
+  };
 
   return (
     <View className={styles.page}>
@@ -112,7 +129,82 @@ const RankingPage: React.FC = () => {
           <Text className={styles.bannerTitle}>上岗合格线</Text>
           <Text className={styles.bannerDesc}>新人必须达到的通过率标准</Text>
         </View>
-        <Text className={styles.bannerValue}>85%</Text>
+        <Text className={styles.bannerValue}>{userProfile.qualificationScore}%</Text>
+      </View>
+
+      <View className={styles.qualificationSection}>
+        <View className={styles.qualificationCard}>
+          <View className={styles.qualificationHeader}>
+            <Text className={styles.qualificationTitle}>达标状态</Text>
+            <View
+              className={classnames(
+                styles.qualificationStatus,
+                userProfile.qualificationMet
+                  ? styles.qualificationStatusMet
+                  : styles.qualificationStatusNotMet
+              )}
+            >
+              <Text style={{ fontSize: '22rpx' }}>
+                {userProfile.qualificationMet ? '✓ 已达标' : '未达标'}
+              </Text>
+            </View>
+          </View>
+          <View className={styles.qualificationBarBg}>
+            <View
+              className={styles.qualificationBarFill}
+              style={{
+                width: `${qualificationProgress}%`,
+                background: userProfile.qualificationMet
+                  ? 'linear-gradient(90deg, #10B981, #34D399)'
+                  : 'linear-gradient(90deg, #F59E0B, #FBBF24)'
+              }}
+            />
+          </View>
+          <Text className={styles.qualificationDesc}>
+            当前通过率{userProfile.passRate}%，合格线{userProfile.qualificationScore}%
+          </Text>
+
+          {isEditingQualification ? (
+            <View className={styles.qualificationEditor}>
+              <View className={styles.editorRow}>
+                <View
+                  className={styles.editorBtn}
+                  onClick={() => handleAdjustQualification(-5)}
+                >
+                  <Text style={{ fontSize: '28rpx', color: '#6366F1' }}>-5</Text>
+                </View>
+                <Text className={styles.editorValue}>{userProfile.qualificationScore}%</Text>
+                <View
+                  className={styles.editorBtn}
+                  onClick={() => handleAdjustQualification(5)}
+                >
+                  <Text style={{ fontSize: '28rpx', color: '#6366F1' }}>+5</Text>
+                </View>
+              </View>
+              <View className={styles.editorActions}>
+                <View
+                  className={styles.editorSaveBtn}
+                  onClick={handleSaveQualification}
+                >
+                  <Text style={{ color: '#fff', fontSize: '24rpx' }}>确认</Text>
+                </View>
+                <View
+                  className={styles.editorCancelBtn}
+                  onClick={() => setIsEditingQualification(false)}
+                >
+                  <Text style={{ fontSize: '24rpx' }}>取消</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View
+              className={styles.editBtn}
+              onClick={() => setIsEditingQualification(true)}
+            >
+              <Text style={{ fontSize: '24rpx', color: '#6366F1' }}>✏️ 调整合格线</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );

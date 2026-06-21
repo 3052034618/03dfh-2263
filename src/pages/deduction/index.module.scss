@@ -218,6 +218,13 @@
   color: $color-error;
 }
 
+.resultPoints {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  margin-left: auto;
+}
+
 .violationCategory {
   display: inline-flex;
   padding: 4rpx 16rpx;

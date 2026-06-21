@@ -171,3 +171,134 @@
   font-weight: $font-weight-bold;
   color: $color-text-white;
 }
+
+.qualificationSection {
+  padding: 0 $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.qualificationCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.qualificationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.qualificationTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.qualificationStatus {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.qualificationStatusMet {
+  background: #D1FAE5;
+  color: $color-success;
+}
+
+.qualificationStatusNotMet {
+  background: #FEF3C7;
+  color: $color-warning;
+}
+
+.qualificationBarBg {
+  height: 16rpx;
+  background: $color-divider;
+  border-radius: $radius-round;
+  overflow: hidden;
+  margin-bottom: $spacing-sm;
+}
+
+.qualificationBarFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-slow;
+}
+
+.qualificationDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  display: block;
+  margin-bottom: $spacing-md;
+}
+
+.qualificationEditor {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.editorRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xl;
+  margin-bottom: $spacing-md;
+}
+
+.editorBtn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: rgba(99, 102, 241, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    background: rgba(99, 102, 241, 0.2);
+  }
+}
+
+.editorValue {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  min-width: 120rpx;
+  text-align: center;
+}
+
+.editorActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: center;
+}
+
+.editorSaveBtn {
+  padding: 12rpx 48rpx;
+  background: $color-primary;
+  border-radius: $radius-round;
+}
+
+.editorCancelBtn {
+  padding: 12rpx 48rpx;
+  background: $color-divider;
+  border-radius: $radius-round;
+  color: $color-text-secondary;
+}
+
+.editBtn {
+  margin-top: $spacing-sm;
+  padding: 12rpx 24rpx;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: $radius-md;
+  display: inline-flex;
+  align-items: center;
+
+  &:active {
+    background: rgba(99, 102, 241, 0.15);
+  }
+}

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Image } from '@tarojs/components';
+import { View, Text, Image, Textarea } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useTrainingStore } from '@/store/useTrainingStore';
-import { mentorReviews } from '@/data/reviews';
 import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
 import styles from './index.module.scss';
 
 const ReviewPage: React.FC = () => {
-  const { weaknessItems, userProfile } = useTrainingStore();
+  const { weaknessItems, mentorReviews, userProfile } = useTrainingStore();
   const [reviewText, setReviewText] = useState('');
 
   const getAccuracyColor = (accuracy: number) => {
@@ -17,10 +16,26 @@ const ReviewPage: React.FC = () => {
   };
 
   const handleSubmitReview = () => {
-    if (!reviewText.trim()) return;
-    console.info('[Review] Mentor submitted review', { reviewText });
+    if (!reviewText.trim()) {
+      Taro.showToast({ title: '请输入点评内容', icon: 'none' });
+      return;
+    }
+    useTrainingStore.getState().addMentorReview({
+      mentorName: '我（带教老师）',
+      mentorAvatar: 'https://picsum.photos/id/1027/200/200',
+      studentId: userProfile.id,
+      content: reviewText.trim(),
+      weakPoints: weaknessItems.filter((w) => w.accuracy < 60).map((w) => w.category),
+      excellentRecordingUnlocked: false,
+      recordingId: ''
+    });
     Taro.showToast({ title: '点评已提交', icon: 'success' });
     setReviewText('');
+  };
+
+  const handleListenRecording = (recordingId: string) => {
+    if (!recordingId) return;
+    Taro.switchTab({ url: '/pages/challenge/index' });
   };
 
   return (
@@ -59,7 +74,10 @@ const ReviewPage: React.FC = () => {
             {review.excellentRecordingUnlocked && (
               <View className={styles.unlockBanner}>
                 <Text className={styles.unlockText}>🎉 已解锁优秀成交录音</Text>
-                <View className={styles.unlockBtn}>
+                <View
+                  className={styles.unlockBtn}
+                  onClick={() => handleListenRecording(review.recordingId)}
+                >
                   <Text style={{ fontSize: '24rpx', color: '#fff' }}>去听</Text>
                 </View>
               </View>
@@ -105,9 +123,13 @@ const ReviewPage: React.FC = () => {
       <View className={styles.inputSection}>
         <View className={styles.inputCard}>
           <Text className={styles.inputTitle}>录入点评（带教老师）</Text>
-          <View className={styles.inputArea}>
-            <Text className={styles.inputPlaceholder}>输入对学员的点评内容...</Text>
-          </View>
+          <Textarea
+            className={styles.inputArea}
+            placeholder="输入对学员的点评内容..."
+            value={reviewText}
+            onInput={(e) => setReviewText(e.detail.value)}
+            maxlength={500}
+          />
           <View className={styles.submitBtn} onClick={handleSubmitReview}>
             <Text style={{ color: '#fff', fontSize: '28rpx' }}>提交点评</Text>
           </View>

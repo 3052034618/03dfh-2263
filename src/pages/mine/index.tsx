@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image } from '@tarojs/components';
 import classnames from 'classnames';
 import Taro from '@tarojs/taro';
@@ -7,6 +7,7 @@ import styles from './index.module.scss';
 
 const MinePage: React.FC = () => {
   const { userProfile, dailyTasks, challengeLevels } = useTrainingStore();
+  const [isEditingQualification, setIsEditingQualification] = useState(false);
 
   const completedTasks = dailyTasks.filter((t) => t.completed).length;
   const passedLevels = challengeLevels.filter((l) => l.passed).length;
@@ -15,6 +16,16 @@ const MinePage: React.FC = () => {
     100,
     Math.round((userProfile.passRate / userProfile.qualificationScore) * 100)
   );
+
+  const handleAdjustQualification = (delta: number) => {
+    const newScore = Math.max(50, Math.min(100, userProfile.qualificationScore + delta));
+    useTrainingStore.getState().setQualificationScore(newScore);
+  };
+
+  const handleSaveQualification = () => {
+    setIsEditingQualification(false);
+    Taro.showToast({ title: '合格线已更新', icon: 'success' });
+  };
 
   return (
     <View className={styles.page}>
@@ -149,6 +160,47 @@ const MinePage: React.FC = () => {
           <Text className={styles.qualificationDesc}>
             当前通过率{userProfile.passRate}%，合格线{userProfile.qualificationScore}%
           </Text>
+
+          {isEditingQualification ? (
+            <View className={styles.qualificationEditor}>
+              <View className={styles.editorRow}>
+                <View
+                  className={styles.editorBtn}
+                  onClick={() => handleAdjustQualification(-5)}
+                >
+                  <Text style={{ fontSize: '28rpx', color: '#6366F1' }}>-5</Text>
+                </View>
+                <Text className={styles.editorValue}>{userProfile.qualificationScore}%</Text>
+                <View
+                  className={styles.editorBtn}
+                  onClick={() => handleAdjustQualification(5)}
+                >
+                  <Text style={{ fontSize: '28rpx', color: '#6366F1' }}>+5</Text>
+                </View>
+              </View>
+              <View className={styles.editorActions}>
+                <View
+                  className={styles.editorSaveBtn}
+                  onClick={handleSaveQualification}
+                >
+                  <Text style={{ color: '#fff', fontSize: '24rpx' }}>确认</Text>
+                </View>
+                <View
+                  className={styles.editorCancelBtn}
+                  onClick={() => setIsEditingQualification(false)}
+                >
+                  <Text style={{ fontSize: '24rpx' }}>取消</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View
+              className={styles.editBtn}
+              onClick={() => setIsEditingQualification(true)}
+            >
+              <Text style={{ fontSize: '24rpx', color: '#6366F1' }}>✏️ 调整合格线</Text>
+            </View>
+          )}
         </View>
       </View>
     </View>

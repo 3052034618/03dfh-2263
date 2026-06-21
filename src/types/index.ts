@@ -104,6 +104,16 @@ export interface MentorReview {
   recordingId: string;
 }
 
+export interface MistakeRecord {
+  id: string;
+  category: 'price_objection' | 'efficacy_promise' | 'postoperative_care' | 'risk_concealment';
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  violationText: string;
+  timestamp: number;
+}
+
 export interface WeaknessItem {
   category: 'price_objection' | 'efficacy_promise' | 'postoperative_care' | 'risk_concealment';
   categoryLabel: string;

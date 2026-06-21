@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { recordings } from '@/data/recordings';
 import styles from './index.module.scss';
+
+const SAMPLE_AUDIO_URL = 'https://cdn.pixabay.com/audio/2024/11/01/audio_071f2db7a2.mp3';
 
 const ChallengePage: React.FC = () => {
   const { challengeLevels } = useTrainingStore();
@@ -13,13 +16,24 @@ const ChallengePage: React.FC = () => {
   const [exaggerationAnswer, setExaggerationAnswer] = useState<boolean | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [audioUrl, setAudioUrl] = useState('');
+  const audio = useAudioPlayer(audioUrl);
 
   const activeRecording = activeLevel
     ? recordings.find((r) => r.id === challengeLevels.find((l) => l.id === activeLevel)?.recordingId)
     : null;
 
+  useEffect(() => {
+    if (activeRecording) {
+      setAudioUrl(SAMPLE_AUDIO_URL);
+    } else {
+      setAudioUrl('');
+    }
+  }, [activeRecording]);
+
   const handleLevelClick = (levelId: string, locked: boolean) => {
     if (locked) return;
+    audio.stop();
     setActiveLevel(levelId);
     setSelectedDemand(null);
     setExaggerationAnswer(null);
@@ -30,6 +44,7 @@ const ChallengePage: React.FC = () => {
   const handleSubmit = () => {
     if (selectedDemand === null || exaggerationAnswer === null) return;
     setSubmitted(true);
+    audio.pause();
 
     const demandCorrect = selectedDemand === activeRecording?.correctDemandIndex;
     const exaggerationCorrect = exaggerationAnswer === activeRecording?.hasExaggeration;
@@ -37,6 +52,25 @@ const ChallengePage: React.FC = () => {
     if (demandCorrect) score += 50;
     if (exaggerationCorrect) score += 50;
     setShowResult(true);
+
+    if (!demandCorrect && activeRecording) {
+      useTrainingStore.getState().addMistake({
+        category: 'efficacy_promise',
+        question: activeRecording.title,
+        userAnswer: activeRecording.demandOptions[selectedDemand],
+        correctAnswer: activeRecording.demandOptions[activeRecording.correctDemandIndex],
+        violationText: `顾客核心诉求判断错误：${activeRecording.demandOptions[selectedDemand]}`
+      });
+    }
+    if (!exaggerationCorrect && activeRecording) {
+      useTrainingStore.getState().addMistake({
+        category: 'efficacy_promise',
+        question: activeRecording.title,
+        userAnswer: exaggerationAnswer ? '存在夸大' : '不存在夸大',
+        correctAnswer: activeRecording.hasExaggeration ? '存在夸大' : '不存在夸大',
+        violationText: '咨询师夸大疗效判断错误'
+      });
+    }
 
     if (activeLevel) {
       const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 60 ? 1 : 0;
@@ -47,6 +81,7 @@ const ChallengePage: React.FC = () => {
   };
 
   const handleCloseModal = () => {
+    audio.stop();
     setActiveLevel(null);
     setSelectedDemand(null);
     setExaggerationAnswer(null);
@@ -137,11 +172,16 @@ const ChallengePage: React.FC = () => {
                 <Text className={styles.modalTitle}>{activeRecording.title}</Text>
 
                 <View className={styles.questionCard}>
-                  <Text className={styles.questionLabel}>录音波形</Text>
+                  <Text className={styles.questionLabel}>🎧 听录音后作答</Text>
                   <AudioWaveform
                     waveformData={activeRecording.waveformData}
-                    progress={0.5}
+                    progress={audio.progress}
+                    duration={activeRecording.duration}
+                    currentTime={audio.currentTime}
+                    isPlaying={audio.isPlaying}
                     violationPositions={submitted ? activeRecording.violations.map((v) => v.position) : []}
+                    onTogglePlay={audio.togglePlay}
+                    showPlayControl
                   />
                 </View>
 

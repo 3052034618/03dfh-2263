@@ -1,61 +1,105 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
 import classnames from 'classnames';
 import AudioWaveform from '@/components/AudioWaveform';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useTrainingStore } from '@/store/useTrainingStore';
 import { recordings } from '@/data/recordings';
 import { VIOLATION_CATEGORY_MAP, VIOLATION_CATEGORY_COLOR } from '@/types';
 import type { Violation } from '@/types';
 import styles from './index.module.scss';
 
+const SAMPLE_AUDIO_URL = 'https://cdn.pixabay.com/audio/2024/11/01/audio_071f2db7a2.mp3';
+
+interface HitResult {
+  violation: Violation;
+  hit: boolean;
+  points: number;
+}
+
 const DeductionPage: React.FC = () => {
-  const { deductionItems } = useTrainingStore();
   const [selectedRecordingIdx, setSelectedRecordingIdx] = useState(0);
-  const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
+  const [selectedPositions, setSelectedPositions] = useState<number[]>([]);
   const [riskAnswer, setRiskAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [audioUrl, setAudioUrl] = useState('');
+  const audio = useAudioPlayer(audioUrl);
 
   const categories = ['all', 'price_objection', 'efficacy_promise', 'postoperative_care', 'risk_concealment'];
-
   const availableRecordings = recordings.filter((r) => r.unlocked);
-
   const currentRecording = availableRecordings[selectedRecordingIdx] || availableRecordings[0];
 
-  const filteredDeductions = useMemo(() => {
-    let items = deductionItems.filter((d) => d.recordingId === currentRecording?.id);
-    if (categoryFilter !== 'all') {
-      items = items.filter((d) => d.category === categoryFilter);
+  useEffect(() => {
+    if (currentRecording) {
+      setAudioUrl(SAMPLE_AUDIO_URL);
     }
-    return items;
-  }, [deductionItems, currentRecording, categoryFilter]);
+  }, [currentRecording]);
 
   const handleWaveformClick = (position: number) => {
     if (submitted) return;
-    setSelectedPosition(position);
+    setSelectedPositions((prev) => {
+      if (prev.includes(position)) {
+        return prev.filter((p) => p !== position);
+      }
+      return [...prev, position];
+    });
   };
 
   const handleSubmit = () => {
-    if (selectedPosition === null && riskAnswer === null) return;
+    if (selectedPositions.length === 0 && riskAnswer === null) return;
     setSubmitted(true);
-    console.info('[Deduction] Submit', { selectedPosition, riskAnswer, recordingId: currentRecording?.id });
+    audio.pause();
+
+    if (currentRecording) {
+      currentRecording.violations.forEach((v) => {
+        const wasHit = selectedPositions.some((p) => Math.abs(p - v.position) <= 2);
+        if (!wasHit) {
+          useTrainingStore.getState().addMistake({
+            category: v.category,
+            question: currentRecording.title,
+            userAnswer: '未标中该违规点',
+            correctAnswer: v.text,
+            violationText: v.text
+          });
+        }
+      });
+      if (riskAnswer !== null && riskAnswer !== currentRecording.riskDisclosureComplete) {
+        useTrainingStore.getState().addMistake({
+          category: 'risk_concealment',
+          question: currentRecording.title,
+          userAnswer: riskAnswer ? '风险告知完整' : '风险告知不完整',
+          correctAnswer: currentRecording.riskDisclosureComplete ? '风险告知完整' : '风险告知不完整',
+          violationText: '风险告知完整性判断错误'
+        });
+      }
+    }
+
+    console.info('[Deduction] Submit', { selectedPositions, riskAnswer, recordingId: currentRecording?.id });
   };
 
   const handleReset = () => {
-    setSelectedPosition(null);
+    audio.stop();
+    setSelectedPositions([]);
     setRiskAnswer(null);
     setSubmitted(false);
   };
 
-  const isPositionCorrect = currentRecording?.violations.some(
-    (v) => Math.abs(v.position - (selectedPosition ?? -1)) <= 2
-  );
-
-  const matchedViolation: Violation | undefined = currentRecording?.violations.find(
-    (v) => Math.abs(v.position - (selectedPosition ?? -1)) <= 2
-  );
+  const getHitResults = (): HitResult[] => {
+    if (!currentRecording) return [];
+    return currentRecording.violations.map((v) => {
+      const hit = selectedPositions.some((p) => Math.abs(p - v.position) <= 2);
+      return { violation: v, hit, points: hit ? v.deductionPoints : 0 };
+    });
+  };
 
   const isRiskAnswerCorrect = riskAnswer === currentRecording?.riskDisclosureComplete;
+  const hitResults = submitted ? getHitResults() : [];
+  const hitCount = hitResults.filter((r) => r.hit).length;
+  const totalViolations = currentRecording?.violations.length || 0;
+  const maxPoints = (currentRecording?.violations.reduce((s, v) => s + v.deductionPoints, 0) || 0) + 30;
+  const earnedPoints = hitResults.reduce((s, r) => s + r.points, 0) + (isRiskAnswerCorrect ? 30 : 0);
+  const totalScore = Math.round((earnedPoints / maxPoints) * 100);
 
   return (
     <View className={styles.page}>
@@ -93,21 +137,29 @@ const DeductionPage: React.FC = () => {
           </View>
 
           <View className={styles.waveformSection}>
-            <Text className={styles.waveformLabel}>点击波形标记违规话术位置</Text>
+            <Text className={styles.waveformLabel}>
+              点击波形标记违规位置（可标记多个）
+            </Text>
             <AudioWaveform
               waveformData={currentRecording?.waveformData || []}
-              progress={0.5}
+              progress={audio.progress}
+              duration={currentRecording?.duration || 0}
+              currentTime={audio.currentTime}
+              isPlaying={audio.isPlaying}
               violationPositions={
                 submitted
                   ? currentRecording?.violations.map((v) => v.position) || []
                   : []
               }
+              selectedPositions={selectedPositions}
               onWaveformClick={handleWaveformClick}
-              selectedPosition={selectedPosition ?? undefined}
+              onTogglePlay={audio.togglePlay}
+              showPlayControl
+              allowMultiSelect
             />
             {!submitted && (
               <Text className={styles.clickHint}>
-                👆 点击波形上的违规位置
+                👆 点击波形上的违规位置（已选{selectedPositions.length}处）
               </Text>
             )}
           </View>
@@ -151,7 +203,7 @@ const DeductionPage: React.FC = () => {
           <View
             className={classnames(
               styles.submitBtn,
-              (selectedPosition === null && riskAnswer === null) && styles.submitBtnDisabled
+              (selectedPositions.length === 0 && riskAnswer === null) && styles.submitBtnDisabled
             )}
             onClick={handleSubmit}
           >
@@ -166,70 +218,49 @@ const DeductionPage: React.FC = () => {
             <Text
               className={classnames(
                 styles.scoreValue,
-                (isPositionCorrect || isRiskAnswerCorrect) ? styles.scorePass : styles.scoreFail
+                totalScore >= 60 ? styles.scorePass : styles.scoreFail
               )}
             >
-              {(isPositionCorrect ? 50 : 0) + (isRiskAnswerCorrect ? 50 : 0)}
+              {totalScore}
             </Text>
-            <Text className={styles.scoreLabel}>总分</Text>
+            <Text className={styles.scoreLabel}>
+              命中{hitCount}/{totalViolations}处违规 · 风险判断{isRiskAnswerCorrect ? '✓' : '✗'}
+            </Text>
           </View>
 
-          {matchedViolation && (
-            <View className={styles.resultCard}>
+          {hitResults.map((result, idx) => (
+            <View key={result.violation.id} className={styles.resultCard}>
               <View className={styles.resultHeader}>
                 <Text className={styles.resultIcon}>
-                  {isPositionCorrect ? '✅' : '❌'}
+                  {result.hit ? '✅' : '❌'}
                 </Text>
                 <Text
                   className={classnames(
                     styles.resultTitle,
-                    isPositionCorrect ? styles.resultTitleCorrect : styles.resultTitleWrong
+                    result.hit ? styles.resultTitleCorrect : styles.resultTitleWrong
                   )}
                 >
-                  {isPositionCorrect ? '位置正确' : '位置偏差'}
+                  {result.hit ? `命中违规 #${idx + 1}` : `漏选违规 #${idx + 1}`}
+                </Text>
+                <Text className={styles.resultPoints}>
+                  {result.hit ? `+${result.violation.deductionPoints}分` : `-${result.violation.deductionPoints}分`}
                 </Text>
               </View>
               <View
                 className={styles.violationCategory}
-                style={{ background: VIOLATION_CATEGORY_COLOR[matchedViolation.category] }}
+                style={{ background: VIOLATION_CATEGORY_COLOR[result.violation.category] }}
               >
                 <Text style={{ fontSize: '22rpx' }}>
-                  {VIOLATION_CATEGORY_MAP[matchedViolation.category]}
+                  {VIOLATION_CATEGORY_MAP[result.violation.category]}
                 </Text>
               </View>
-              <Text className={styles.violationText}>{matchedViolation.text}</Text>
+              <Text className={styles.violationText}>{result.violation.text}</Text>
               <View className={styles.standardAnswer}>
                 <Text className={styles.standardLabel}>标准答案</Text>
-                <Text className={styles.standardText}>{matchedViolation.standardAnswer}</Text>
+                <Text className={styles.standardText}>{result.violation.standardAnswer}</Text>
               </View>
             </View>
-          )}
-
-          {currentRecording?.violations
-            .filter((v) => v.id !== matchedViolation?.id)
-            .map((v) => (
-              <View key={v.id} className={styles.resultCard}>
-                <View className={styles.resultHeader}>
-                  <Text className={styles.resultIcon}>📍</Text>
-                  <Text className={classnames(styles.resultTitle, styles.resultTitleWrong)}>
-                    漏选违规
-                  </Text>
-                </View>
-                <View
-                  className={styles.violationCategory}
-                  style={{ background: VIOLATION_CATEGORY_COLOR[v.category] }}
-                >
-                  <Text style={{ fontSize: '22rpx' }}>
-                    {VIOLATION_CATEGORY_MAP[v.category]}
-                  </Text>
-                </View>
-                <Text className={styles.violationText}>{v.text}</Text>
-                <View className={styles.standardAnswer}>
-                  <Text className={styles.standardLabel}>标准答案</Text>
-                  <Text className={styles.standardText}>{v.standardAnswer}</Text>
-                </View>
-              </View>
-            ))}
+          ))}
         </View>
       )}
     </View>

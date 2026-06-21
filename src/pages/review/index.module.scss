@@ -232,6 +232,10 @@
   padding: $spacing-md;
   min-height: 200rpx;
   margin-bottom: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .inputPlaceholder {

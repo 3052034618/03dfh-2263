@@ -7,6 +7,50 @@
   border-radius: $radius-lg;
 }
 
+.controlRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.playBtn {
+  width: 72rpx;
+  height: 72rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-light);
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.92);
+    opacity: 0.9;
+  }
+}
+
+.playBtnText {
+  font-size: 32rpx;
+  color: $color-text-white;
+}
+
+.timeInfo {
+  display: flex;
+  align-items: baseline;
+}
+
+.currentTimeText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.durationText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
 .waveformWrap {
   display: flex;
   align-items: center;
@@ -35,7 +79,7 @@
 
 .barViolation {
   background: $color-error;
-  opacity: 0.4;
+  opacity: 0.5;
 
   &.barSelected {
     opacity: 1;
@@ -47,7 +91,7 @@
 .barSelected {
   background: $color-accent-gold;
   transform: scaleX(1.5);
-  box-shadow: 0 0 8rpx rgba($color-accent-gold, 0.5);
+  box-shadow: 0 0 8rpx rgba(245, 158, 11, 0.5);
 }
 
 .progressLine {
