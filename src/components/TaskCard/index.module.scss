@@ -1,0 +1,96 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+}
+
+.cardCompleted {
+  border-left: 6rpx solid $color-success;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.typeTag {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.typeTagText {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.duration {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  @include text-ellipsis;
+}
+
+.desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-md;
+  @include text-ellipsis-multi(2);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scoreWrap {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.scoreLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.scoreValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+}
+
+.startBtn {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: 8rpx 32rpx;
+  border-radius: $radius-round;
+}
+
+.startBtnText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+}
+
+.completedBadge {
+  font-size: $font-size-lg;
+  color: $color-success;
+  font-weight: $font-weight-bold;
+}

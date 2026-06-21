@@ -1,0 +1,257 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.searchBar {
+  margin: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  box-shadow: $shadow-card;
+}
+
+.searchPlaceholder {
+  font-size: $font-size-sm;
+  color: $color-text-disabled;
+}
+
+.categoryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding: 0 $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.categoryCard {
+  width: calc(33.33% - #{$spacing-md});
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg $spacing-md;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.categoryCardActive {
+  border: 2rpx solid $color-primary;
+  background: #EEF2FF;
+}
+
+.categoryIcon {
+  font-size: 48rpx;
+  margin-bottom: $spacing-xs;
+}
+
+.categoryName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  text-align: center;
+}
+
+.categoryCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.scriptList {
+  padding: 0 $spacing-lg;
+}
+
+.scriptCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.scriptHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.scriptTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.scriptTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  margin-left: $spacing-sm;
+}
+
+.scriptTagText {
+  font-size: 20rpx;
+}
+
+.scriptContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.scriptDetail {
+  border-top: 1rpx solid $color-divider;
+  padding-top: $spacing-md;
+}
+
+.detailSection {
+  margin-bottom: $spacing-md;
+}
+
+.detailLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.detailItem {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  padding-left: $spacing-md;
+  position: relative;
+  display: block;
+  margin-bottom: 4rpx;
+
+  &::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: $color-primary-light;
+  }
+}
+
+.mistakeSection {
+  background: #FEE2E2;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.mistakeLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-error;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.mistakeItem {
+  font-size: $font-size-sm;
+  color: $color-accent-coral;
+  line-height: $line-height-normal;
+  padding-left: $spacing-md;
+  position: relative;
+  display: block;
+  margin-bottom: 4rpx;
+
+  &::before {
+    content: '✗';
+    position: absolute;
+    left: 0;
+    color: $color-error;
+  }
+}
+
+.weaknessSection {
+  margin: $spacing-lg;
+}
+
+.weaknessTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.weaknessCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.weaknessHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.weaknessCategory {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.weaknessAccuracy {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+}
+
+.weaknessBarBg {
+  height: 12rpx;
+  background: $color-divider;
+  border-radius: $radius-round;
+  overflow: hidden;
+  margin-bottom: $spacing-sm;
+}
+
+.weaknessBarFill {
+  height: 100%;
+  border-radius: $radius-round;
+  transition: width $transition-slow;
+}
+
+.weaknessCount {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+  margin-bottom: $spacing-sm;
+}
+
+.weaknessMistakes {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.weaknessMistake {
+  font-size: $font-size-xs;
+  color: $color-accent-coral;
+  padding: 4rpx 12rpx;
+  background: #FEE2E2;
+  border-radius: $radius-xs;
+  @include text-ellipsis;
+}

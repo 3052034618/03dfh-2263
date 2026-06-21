@@ -1,0 +1,72 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  position: relative;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+}
+
+.waveformWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 120rpx;
+  gap: 4rpx;
+}
+
+.bar {
+  flex: 1;
+  min-width: 6rpx;
+  max-width: 12rpx;
+  background: $color-border;
+  border-radius: 4rpx;
+  transition: all $transition-fast;
+  position: relative;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.barPast {
+  background: $color-primary-light;
+}
+
+.barViolation {
+  background: $color-error;
+  opacity: 0.4;
+
+  &.barSelected {
+    opacity: 1;
+    background: $color-error;
+    transform: scaleX(1.5);
+  }
+}
+
+.barSelected {
+  background: $color-accent-gold;
+  transform: scaleX(1.5);
+  box-shadow: 0 0 8rpx rgba($color-accent-gold, 0.5);
+}
+
+.progressLine {
+  position: absolute;
+  top: $spacing-md;
+  bottom: 80rpx;
+  width: 4rpx;
+  background: $color-primary;
+  border-radius: 2rpx;
+  transition: left $transition-base;
+}
+
+.timeRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-sm;
+}
+
+.timeText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
